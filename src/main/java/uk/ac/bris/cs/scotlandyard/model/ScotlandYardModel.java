@@ -43,7 +43,6 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.mrX = requireNonNull(mrX);
 		this.Detective1 = requireNonNull(firstDetective);
 		this.restOfDetectives = restOfTheDetectives;
-
 		if(graph.isEmpty()) //map cannot be empty
 		    throw new IllegalArgumentException("map should not be empty");
 
@@ -122,7 +121,11 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	@Override
 	public List<Colour> getPlayers() {
 		// TODO
-		throw new RuntimeException("Implement me");
+		List<Colour> colours = new ArrayList<>();
+		for ( ScotlandYardPlayer x: players){
+		    colours.add(x.colour());
+        }
+        return Collections.unmodifiableList(colours);
 	}
 
 	@Override
@@ -164,13 +167,13 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	@Override
 	public List<Boolean> getRounds() {
 		// TODO
-		throw new RuntimeException("Implement me");
+		return Collections.unmodifiableList(rounds);
 	}
 
 	@Override
 	public Graph<Integer, Transport> getGraph() {
 		// TODO
-		throw new RuntimeException("Implement me");
+		return new ImmutableGraph<>(map);
 	}
 
 }
