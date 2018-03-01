@@ -38,6 +38,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.mrX = requireNonNull(mrX);
 		this.Detective1 = requireNonNull(firstDetective);
 
+
 		if(graph.isEmpty()) //map cannot be empty
 		    throw new IllegalArgumentException("map should not be empty");
 
@@ -45,18 +46,18 @@ public class ScotlandYardModel implements ScotlandYardGame {
             throw new IllegalArgumentException("MrX should be Black");
 
 
+		for( PlayerConfiguration x : restOfTheDetectives){
+			restOfDetectives.add(requireNonNull(x));
+			if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
+				throw new IllegalArgumentException("Only 1 mrX is allowed.");
+			if(missingTickets(x))
+				throw new IllegalArgumentException("detective is missing tickets");
+		}
+
         if(isNotDetective(firstDetective)) //If there is a mrX in your list of detectives it should fail
             throw new IllegalArgumentException("Only 1o mrX is allowed");
         if(missingTickets(firstDetective))
             throw new IllegalArgumentException("detective is missing tickets");
-
-		for( PlayerConfiguration x : restOfTheDetectives){
-            restOfDetectives.add(requireNonNull(x));
-            if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
-		        throw new IllegalArgumentException("Only 1 mrX is allowed.");
-            if(missingTickets(x))
-                throw new IllegalArgumentException("detective is missing tickets");
-        }
 	}
 
 	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
