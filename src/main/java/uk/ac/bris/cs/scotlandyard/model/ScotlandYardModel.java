@@ -30,23 +30,22 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private List<PlayerConfiguration> restOfDetectives;
 
 
-	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
-	    return (x.colour.isMrX() || x.tickets.containsKey(DOUBLE)|| x.tickets.containsKey(SECRET));
-    }
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
 			PlayerConfiguration... restOfTheDetectives) {
 		this.rounds = requireNonNull(rounds);
 		this.map = requireNonNull(graph);
 		this.mrX = requireNonNull(mrX);
+		this.Detective1 = requireNonNull(firstDetective);
+
 		if(graph.isEmpty()) //map cannot be empty
 		    throw new IllegalArgumentException("map should not be empty");
 
 		if(mrX.colour != BLACK) // mrX cannot be a detective's colour
             throw new IllegalArgumentException("MrX should be Black");
 
-		this.Detective1 = requireNonNull(firstDetective);  //If there is a mrX in your list of detectives it should fail
-        if(isNotDetective(firstDetective))
+
+        if(isNotDetective(firstDetective)) //If there is a mrX in your list of detectives it should fail
             throw new IllegalArgumentException("Only 1o mrX is allowed");
 
 		for( PlayerConfiguration x : restOfTheDetectives){
@@ -54,6 +53,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
             if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
 		        throw new IllegalArgumentException("Only 1 mrX is allowed.");
         }
+	}
+
+	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
+		return (!x.colour.isMrX() || x.tickets.containsKey(DOUBLE)|| x.tickets.containsKey(SECRET));
 	}
 
 	@Override
