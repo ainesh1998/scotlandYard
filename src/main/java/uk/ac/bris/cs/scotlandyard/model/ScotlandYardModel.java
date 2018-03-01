@@ -47,17 +47,24 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
         if(isNotDetective(firstDetective)) //If there is a mrX in your list of detectives it should fail
             throw new IllegalArgumentException("Only 1o mrX is allowed");
+        if(missingTickets(firstDetective))
+            throw new IllegalArgumentException("detective is missing tickets");
 
 		for( PlayerConfiguration x : restOfTheDetectives){
             restOfDetectives.add(requireNonNull(x));
             if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
 		        throw new IllegalArgumentException("Only 1 mrX is allowed.");
+            if(missingTickets(x))
+                throw new IllegalArgumentException("detective is missing tickets");
         }
 	}
 
 	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
-		return (!x.colour.isMrX() || x.tickets.containsKey(DOUBLE)|| x.tickets.containsKey(SECRET));
+		return (x.colour.isMrX() || x.tickets.containsKey(DOUBLE)|| x.tickets.containsKey(SECRET));
 	}
+	private boolean missingTickets(PlayerConfiguration x){ // check that detectives start with the right amount of cards
+	    return (x.tickets.get(Ticket.TAXI) !=11 ||x.tickets.get(Ticket.BUS) !=8|| x.tickets.get(Ticket.UNDERGROUND) != 4);
+    }
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
