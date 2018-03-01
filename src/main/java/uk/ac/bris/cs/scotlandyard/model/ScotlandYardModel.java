@@ -8,6 +8,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.BLACK;
+import static uk.ac.bris.cs.scotlandyard.model.Colour.BLUE;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.DOUBLE;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.SECRET;
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import com.google.common.collect.ImmutableList;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
@@ -28,6 +31,8 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private Graph<Integer,Transport> map;
 	private PlayerConfiguration mrX, Detective1;
 	private PlayerConfiguration[] restOfDetectives;
+	private List<ScotlandYardPlayer> players;
+	private List<PlayerConfiguration> testlist; //simply used to make iteration easier
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -45,13 +50,34 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		if(mrX.colour != BLACK) // mrX cannot be a detective's colour
             throw new IllegalArgumentException("MrX should be Black");
 
-
 		for( PlayerConfiguration x : restOfTheDetectives){
 			checkValidDetective(x);
+			players.add(new ScotlandYardPlayer(x.player,x.colour,x.location,x.tickets));
+			testlist.add(x);
 		}
 
        checkValidDetective(firstDetective);
+        testlist.add(firstDetective);
+        testlist.add(mrX);
+       checkOverlap(testlist);
+       checkDuplicate(testlist);
 	}
+	private void checkOverlap(List<PlayerConfiguration> players){
+	    Set<Integer> locations = new HashSet<>();
+	    for(PlayerConfiguration x : players){
+            if(locations.contains(x.location))
+                throw new IllegalArgumentException("2 players are in the same location");
+            locations.add(x.location);
+        }
+    }
+    private void checkDuplicate(List<PlayerConfiguration> players){
+        Set<Colour> locations = new HashSet<>();
+        for(PlayerConfiguration x : players){
+            if(locations.contains(x.colour))
+                throw new IllegalArgumentException("2 players are in the same location");
+            locations.add(x.colour);
+        }
+    }
 
 	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
 		return (x.colour.isMrX() || x.tickets.containsKey(DOUBLE)|| x.tickets.containsKey(SECRET));
@@ -65,7 +91,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		requireNonNull(x);
         if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
             throw new IllegalArgumentException("Only 1 mrX is allowed.");
-        if(missingTickets(x))
+        if(missingTickets(x)) //if a detective doesn't have a ticket type it should fail
             throw new IllegalArgumentException("detective is missing tickets");
     }
 
