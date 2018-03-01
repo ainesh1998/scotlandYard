@@ -27,7 +27,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private List<Boolean> rounds;
 	private Graph<Integer,Transport> map;
 	private PlayerConfiguration mrX, Detective1;
-	private List<PlayerConfiguration> restOfDetectives;
+	private PlayerConfiguration[] restOfDetectives;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -37,7 +37,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.map = requireNonNull(graph);
 		this.mrX = requireNonNull(mrX);
 		this.Detective1 = requireNonNull(firstDetective);
-
+		this.restOfDetectives = restOfTheDetectives;
 
 		if(graph.isEmpty()) //map cannot be empty
 		    throw new IllegalArgumentException("map should not be empty");
@@ -47,7 +47,6 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 
 		for( PlayerConfiguration x : restOfTheDetectives){
-			restOfDetectives.add(requireNonNull(x));
 			checkValidDetective(x);
 		}
 
@@ -57,10 +56,13 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
 		return (x.colour.isMrX() || x.tickets.containsKey(DOUBLE)|| x.tickets.containsKey(SECRET));
 	}
+
 	private boolean missingTickets(PlayerConfiguration x){ // check that detectives start with the right amount of cards
 	    return (x.tickets.get(Ticket.TAXI) !=11 ||x.tickets.get(Ticket.BUS) !=8|| x.tickets.get(Ticket.UNDERGROUND) != 4);
     }
+
     private void checkValidDetective(PlayerConfiguration x){
+		requireNonNull(x);
         if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
             throw new IllegalArgumentException("Only 1 mrX is allowed.");
         if(missingTickets(x))
