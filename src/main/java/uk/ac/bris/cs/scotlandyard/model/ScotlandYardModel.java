@@ -58,7 +58,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	}
 
 	private boolean missingTickets(PlayerConfiguration x){ // check that detectives start with the right amount of cards
-	    return (x.tickets.get(Ticket.TAXI) !=11 ||x.tickets.get(Ticket.BUS) !=8|| x.tickets.get(Ticket.UNDERGROUND) != 4);
+	    return !(x.tickets.containsKey(Ticket.TAXI) && x.tickets.containsKey(Ticket.BUS) && x.tickets.containsKey(Ticket.UNDERGROUND));
     }
 
     private void checkValidDetective(PlayerConfiguration x){
