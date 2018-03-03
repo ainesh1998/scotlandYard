@@ -35,8 +35,8 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
-			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
-			PlayerConfiguration... restOfTheDetectives) {
+							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
+							 PlayerConfiguration... restOfTheDetectives) {
 		this.rounds = requireNonNull(rounds);
 		this.map = requireNonNull(graph);
 		this.mrX = requireNonNull(mrX);
@@ -44,61 +44,61 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.restOfDetectives = restOfTheDetectives;
 		players.add(0,new ScotlandYardPlayer(mrX.player,mrX.colour,mrX.location,mrX.tickets));
 		players.add(1, new ScotlandYardPlayer(firstDetective.player,firstDetective.colour,firstDetective.location,firstDetective.tickets));
+
 		if(graph.isEmpty()) //map cannot be empty
-		    throw new IllegalArgumentException("map should not be empty");
+			throw new IllegalArgumentException("map should not be empty");
 		if(rounds.isEmpty()){
-		    throw new IllegalArgumentException("Empty Rounds");
-        }
+			throw new IllegalArgumentException("Empty Rounds");
+		}
 
 		if(mrX.colour != BLACK) // mrX cannot be a detective's colour
-            throw new IllegalArgumentException("MrX should be Black");
-		if(missingXTickets(mrX))
-		    throw new IllegalArgumentException(("MrX is missing tickets"));
+			throw new IllegalArgumentException("MrX should be Black");
+		if(missingTickets(mrX))
+			throw new IllegalArgumentException(("MrX is missing tickets"));
 
 		for( PlayerConfiguration x : restOfTheDetectives){
 			checkValidDetective(x);
 			players.add(new ScotlandYardPlayer(x.player,x.colour,x.location,x.tickets));
 		}
-       checkValidDetective(firstDetective);
-       checkOverlap(players);
-       checkDuplicate(players);
 
+		checkValidDetective(firstDetective);
+		checkOverlap(players);
+		checkDuplicate(players);
 	}
+
 	private void checkOverlap(List<ScotlandYardPlayer> players){
-	    Set<Integer> locations = new HashSet<>();
-	    for(ScotlandYardPlayer x : players){
-            if(locations.contains(x.location()))
-                throw new IllegalArgumentException("2 players are in the same location");
-            locations.add(x.location());
-        }
-    }
-    private void checkDuplicate(List<ScotlandYardPlayer> players){
-        Set<Colour> locations = new HashSet<>();
-        for(ScotlandYardPlayer x : players){
-            if(locations.contains(x.colour()))
-                throw new IllegalArgumentException("2 players are in the same location");
-            locations.add(x.colour());
-        }
-    }
+		Set<Integer> locations = new HashSet<>();
+		for(ScotlandYardPlayer x : players){
+			if(locations.contains(x.location()))
+				throw new IllegalArgumentException("2 players are in the same location");
+			locations.add(x.location());
+		}
+	}
+
+	private void checkDuplicate(List<ScotlandYardPlayer> players){
+		Set<Colour> locations = new HashSet<>();
+		for(ScotlandYardPlayer x : players){
+			if(locations.contains(x.colour()))
+				throw new IllegalArgumentException("2 players are in the same location");
+			locations.add(x.colour());
+		}
+	}
 
 	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
 		return (x.colour.isMrX() || x.tickets.get(DOUBLE) != 0|| x.tickets.get(SECRET) != 0);
 	}
 
-	private boolean missingDTickets(PlayerConfiguration x){ // check that detectives start with the right amount of cards
-	    return !(x.tickets.containsKey(TAXI) && x.tickets.containsKey(BUS) && x.tickets.containsKey(UNDERGROUND) && x.tickets.containsKey(DOUBLE) && x.tickets.containsKey(SECRET) );
-    }
-    private boolean missingXTickets(PlayerConfiguration x){
-        return !(x.tickets.containsKey(TAXI) && x.tickets.containsKey(BUS) && x.tickets.containsKey(UNDERGROUND) && x.tickets.containsKey(DOUBLE) && x.tickets.containsKey(SECRET) );
-    }
+	private boolean missingTickets(PlayerConfiguration x){
+		return !(x.tickets.containsKey(TAXI) && x.tickets.containsKey(BUS) && x.tickets.containsKey(UNDERGROUND) && x.tickets.containsKey(DOUBLE) && x.tickets.containsKey(SECRET) );
+	}
 
-    private void checkValidDetective(PlayerConfiguration x){
+	private void checkValidDetective(PlayerConfiguration x){
 		requireNonNull(x);
-        if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
-            throw new IllegalArgumentException("Only 1 mrX is allowed.");
-        if(missingDTickets(x)) //if a detective doesn't have a ticket type it should fail
-            throw new IllegalArgumentException("detective is missing tickets");
-    }
+		if(missingTickets(x)) //if a detective doesn't have a ticket type it should fail
+			throw new IllegalArgumentException("detective is missing tickets");
+		if(isNotDetective(x)) //If there is a mrX in your list of detectives it should fail
+			throw new IllegalArgumentException("Only 1 mrX is allowed.");
+	}
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
@@ -129,9 +129,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		// TODO
 		List<Colour> colours = new ArrayList<>();
 		for ( ScotlandYardPlayer x: players){
-		    colours.add(x.colour());
-        }
-        return Collections.unmodifiableList(colours);
+			colours.add(x.colour());
+		}
+		return Collections.unmodifiableList(colours);
 	}
 
 	@Override
