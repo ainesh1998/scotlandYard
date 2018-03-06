@@ -32,6 +32,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private PlayerConfiguration mrX, Detective1;
 	private PlayerConfiguration[] restOfDetectives;
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
+	private int currentRound = 0;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -140,14 +141,17 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		throw new RuntimeException("Implement me");
 	}
 
+	// The location of a player with a given colour in its last known location.
 	@Override
 	public Optional<Integer> getPlayerLocation(Colour colour) {
 		for (ScotlandYardPlayer player : players) {
 		    if (player.colour() == colour) {
 		        if (player.isMrX()) {
-		            // only reveal mrx's current location on certain rounds
+		            if (rounds.get(getCurrentRound())) return Optional.of(player.location());
+                    else return Optional.of(0); // if MrX is hidden this round, return 0
+
                 }
-		        else return Optional.of(player.location());
+		        return Optional.of(player.location());
             }
         }
         return Optional.empty();
@@ -175,8 +179,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public int getCurrentRound() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return currentRound;
 	}
 
 	@Override
