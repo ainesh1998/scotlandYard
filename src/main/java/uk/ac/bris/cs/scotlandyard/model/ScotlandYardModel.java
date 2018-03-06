@@ -143,15 +143,22 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	@Override
 	public Optional<Integer> getPlayerLocation(Colour colour) {
 		for (ScotlandYardPlayer player : players) {
-		    if (player.colour() == colour) return Optional.of(player.location());
+		    if (player.colour() == colour) {
+		        if (player.isMrX()) {
+		            // only reveal mrx's current location on certain rounds
+                }
+		        else return Optional.of(player.location());
+            }
         }
         return Optional.empty();
 	}
 
 	@Override
 	public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) {
-		// TODO
-		throw new RuntimeException("Implement me");
+        for (ScotlandYardPlayer player : players) {
+            if (player.colour() == colour) return Optional.of(player.tickets().get(ticket));
+        }
+        return Optional.empty();
 	}
 
 	@Override
