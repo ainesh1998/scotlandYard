@@ -142,8 +142,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Optional<Integer> getPlayerLocation(Colour colour) {
-		// TODO
-		throw new RuntimeException("Implement me");
+		for (ScotlandYardPlayer player : players) {
+		    if (player.colour() == colour) return Optional.of(player.location());
+        }
+        return Optional.empty();
 	}
 
 	@Override
