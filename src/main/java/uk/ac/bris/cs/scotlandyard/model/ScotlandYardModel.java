@@ -26,14 +26,14 @@ import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 
 // TODO implement all methods and pass all tests
-public class ScotlandYardModel implements ScotlandYardGame {
+public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private List<Boolean> rounds;
 	private Graph<Integer,Transport> map;
 	private PlayerConfiguration mrX, Detective1;
 	private PlayerConfiguration[] restOfDetectives;
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
-	private Colour currentPlayer;
+	private int currentPlayer;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -46,7 +46,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.restOfDetectives = restOfTheDetectives;
 		players.add(0,new ScotlandYardPlayer(mrX.player,mrX.colour,mrX.location,mrX.tickets));
 		players.add(1, new ScotlandYardPlayer(firstDetective.player,firstDetective.colour,firstDetective.location,firstDetective.tickets));
-		currentPlayer = BLACK;
+		currentPlayer = 0;
 
 		if(graph.isEmpty()) //map cannot be empty
 			throw new IllegalArgumentException("map should not be empty");
@@ -117,9 +117,22 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public void startRotate() {
-		// TODO
-		throw new RuntimeException("Implement me");
-	}
+	   // Player player1 = players.get(currentPlayer).player();
+        //player1.makeMove(requireNonNull(this), getPlayerLocation(getCurrentPlayer()).get(),new HashSet<Move>(),requireNonNull(this));
+        if(this == null){
+            throw new NullPointerException("error");
+        }
+        for(ScotlandYardPlayer x : players){
+            x.player().makeMove(requireNonNull(this),x.location(),new HashSet<>(), requireNonNull(this));
+            currentPlayer += 1;
+        }
+        currentRound += 1;
+}
+
+	@Override
+    public void accept(Move m) {
+
+    }
 
 	@Override
 	public Collection<Spectator> getSpectators() {
@@ -173,7 +186,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Colour getCurrentPlayer() {
-		return currentPlayer;
+		return players.get(currentPlayer).colour();
 	}
 
 	@Override
