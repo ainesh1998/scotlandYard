@@ -33,6 +33,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private PlayerConfiguration[] restOfDetectives;
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
+	private Colour currentPlayer;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -45,6 +46,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.restOfDetectives = restOfTheDetectives;
 		players.add(0,new ScotlandYardPlayer(mrX.player,mrX.colour,mrX.location,mrX.tickets));
 		players.add(1, new ScotlandYardPlayer(firstDetective.player,firstDetective.colour,firstDetective.location,firstDetective.tickets));
+		currentPlayer = BLACK;
 
 		if(graph.isEmpty()) //map cannot be empty
 			throw new IllegalArgumentException("map should not be empty");
@@ -137,8 +139,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return Collections.unmodifiableSet(new HashSet<>());
 	}
 
 	// The location of a player with a given colour in its last known location.
@@ -167,14 +168,12 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public boolean isGameOver() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return false;
 	}
 
 	@Override
 	public Colour getCurrentPlayer() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return currentPlayer;
 	}
 
 	@Override
