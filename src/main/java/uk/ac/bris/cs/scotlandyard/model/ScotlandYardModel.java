@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
+import sun.security.krb5.SCDynamicStoreConfig;
 import sun.security.x509.EDIPartyName;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
@@ -117,10 +118,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public void startRotate() {
-	   //Player player1 = players.get(currentPlayer).player();
-	   ScotlandYardPlayer player1 = players.get(currentPlayer);
-	   player1.player().makeMove(this, player1.location(),new HashSet<>(),this);
-	   currentPlayer += 1;
+	  /* ScotlandYardPlayer player1 = players.get(currentPlayer);
+	   player1.player().makeMove(this, player1.location(),new HashSet<>(),this); */
+	  for(ScotlandYardPlayer p :players){
+	      p.player().makeMove(this,p.location(),validMove(p.colour()),this);
+      }
+      currentRound += 1;
 
 
 }
@@ -160,6 +163,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	    if(!validMoves.contains(m))
 	        throw new IllegalArgumentException("illegal move");
 	    currentPlayer += 1;
+        ScotlandYardPlayer player = players.get(currentPlayer);
+        player.player().makeMove(this,player.location(),validMove(player.colour()),this);
+        if(m.colour().isMrX())
+            currentRound += 1;
 
     }
 
