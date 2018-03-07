@@ -123,7 +123,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	  for(ScotlandYardPlayer p :players){
 	      p.player().makeMove(this,p.location(),validMove(p.colour()),this);
       }
-      currentRound += 1;
+      // currentRound += 1;
 
 
 }
@@ -162,12 +162,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	    Set<Move> validMoves = validMove(m.colour());
 	    if(!validMoves.contains(m))
 	        throw new IllegalArgumentException("illegal move");
-	    currentPlayer += 1;
-        ScotlandYardPlayer player = players.get(currentPlayer);
-        player.player().makeMove(this,player.location(),validMove(player.colour()),this);
-        if(m.colour().isMrX())
-            currentRound += 1;
 
+       if(m instanceof DoubleMove){ //if a double move is played to rounds have passed
+           currentRound += 2;
+       }
+       currentRound += 1;
+        currentPlayer += 1;
     }
 
 	@Override
