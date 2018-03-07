@@ -118,41 +118,39 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public void startRotate() {
-	  /* ScotlandYardPlayer player1 = players.get(currentPlayer);
-	   player1.player().makeMove(this, player1.location(),new HashSet<>(),this); */
-	  for(ScotlandYardPlayer p :players){
-	      p.player().makeMove(this,p.location(),validMove(p.colour()),this);
-      }
-      // currentRound += 1;
+
+	  ScotlandYardPlayer p = players.get(currentPlayer);
+	  p.player().makeMove(this,p.location(),validMove(p.colour()),this);
+
 
 
 }
 
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
-     //  Node<Integer> position = new Node(getPlayerLocation(player).get());
        ScotlandYardPlayer p = null ;
        for(ScotlandYardPlayer y : players){
-           if(y.colour().equals(player)) {
+           if(y.colour().equals(player)) { //selects correct Player
                p = y;
            }
        }
-       Node<Integer> position = new Node(p.location());
+       Node<Integer> position = new Node(p.location()); //have no idea how to get rid of this warning
        Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
            Ticket ticket = fromTransport(e.data());
            int destination = e.destination().value();
-           moves.add(new TicketMove(player,ticket,destination));
+           moves.add(new TicketMove(player,ticket,destination)); // Adds all possible ticket Moves
            if(player.isMrX()){ // mrX can make double moves
                Node<Integer> pos = e.destination();
-               for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){
+               for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){ //get edges from 2nd node reached
                    Ticket ticket2 = fromTransport(x.data());
                    int destination2 = x.destination().value();
                    moves.add(new DoubleMove(player,ticket,destination,ticket2,destination2));
                }
            }
        }
-       moves.add(new PassMove(player)); //player can also choose not to move
+       if(moves.size() == 0 && player.isDetective()) // if there's no available place to move
+           moves.add(new PassMove(player));        // the player passes if they're a detective
        return moves;
    }
 
@@ -163,11 +161,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	    if(!validMoves.contains(m))
 	        throw new IllegalArgumentException("illegal move");
 
-       if(m instanceof DoubleMove){ //if a double move is played to rounds have passed
-           currentRound += 2;
+       if(m.colour().isMrX()){
+           if(m instanceof DoubleMove)
+               currentRound += 2;
        }
-       currentRound += 1;
-        currentPlayer += 1;
+       if(currentPlayer < getPlayers().size() - 1){
+           currentPlayer += 1;
+           startRotate();
+       }else{
+               currentRound += 1;
+               currentPlayer = 0; // starts at mrX again
+
+       }
+
     }
 
 	@Override
@@ -229,6 +235,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	public int getCurrentRound() {
 		return currentRound;
 	}
+	public boolean isRevealRound(){
+	    return (rounds.get(currentRound));
+    }
 
 	@Override
 	public List<Boolean> getRounds() {
