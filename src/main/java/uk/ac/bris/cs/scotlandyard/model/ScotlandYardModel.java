@@ -124,34 +124,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 
 }
-   /* private Set<Move> validMove(Colour player){ //Generates all possible moves player can make
-	    Node<Integer> position = new Node(getPlayerLocation(player).get());
-	    Collection <Edge<Integer,Transport>> edges;
-	    Set<Move> moves = new HashSet<>();
-	    Set<TicketMove> ticketMoves = new HashSet<>();
-	    Set<DoubleMove> doubles = new HashSet<>(); // required for mrX
-	    edges = map.getEdgesFrom(position);
-	    for(Edge<Integer,Transport> x :edges){ //get all possible ticket moves
-	        Ticket ticket = fromTransport(x.data());
-	        int destination = x.destination().value();
-	        ticketMoves.add(new TicketMove(player, ticket, destination));
 
-	        if(player.isMrX()){ //mrX can also make double Moves
-	            Node<Integer> sndPos = x.destination();
-	            for(Edge<Integer,Transport> y : map.getEdgesFrom(sndPos)) {
-	                Ticket ticket2 = fromTransport(y.data());
-	                int destination2 = y.destination().value();
-	                doubles.add(new DoubleMove(player,ticket,destination,ticket2,destination2));
-                }
-            }
-        }
-        moves.addAll(ticketMoves);
-	    moves.addAll(doubles);
-	    return moves;
-    } */
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
      //  Node<Integer> position = new Node(getPlayerLocation(player).get());
-       Collection<Edge<Integer,Transport>> edges = map.getEdges();
+       ScotlandYardPlayer p = null ;
+       for(ScotlandYardPlayer y : players){
+           if(y.colour().equals(player)) {
+               p = y;
+           }
+       }
+       Node<Integer> position = new Node(p.location());
+       Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
            Ticket ticket = fromTransport(e.data());
