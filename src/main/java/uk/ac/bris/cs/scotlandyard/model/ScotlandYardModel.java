@@ -30,36 +30,26 @@ import javax.print.attribute.standard.Destination;
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private List<Boolean> rounds;
 	private Graph<Integer,Transport> map;
-	private PlayerConfiguration mrX, Detective1;
-	private PlayerConfiguration[] restOfDetectives;
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
 	private int currentPlayer;
-
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
 							 PlayerConfiguration... restOfTheDetectives) {
 		this.rounds = requireNonNull(rounds);
 		this.map = requireNonNull(graph);
-		this.mrX = requireNonNull(mrX);
-		this.Detective1 = requireNonNull(firstDetective);
-		this.restOfDetectives = restOfTheDetectives;
+		requireNonNull(mrX);
+		requireNonNull(firstDetective);
 		players.add(0,new ScotlandYardPlayer(mrX.player,mrX.colour,mrX.location,mrX.tickets));
 		players.add(1, new ScotlandYardPlayer(firstDetective.player,firstDetective.colour,firstDetective.location,firstDetective.tickets));
 		currentPlayer = 0;
-
 		if(graph.isEmpty()) //map cannot be empty
 			throw new IllegalArgumentException("map should not be empty");
 		if(rounds.isEmpty()){
 			throw new IllegalArgumentException("Empty Rounds");
 		}
-
-		if(mrX.colour != BLACK) // mrX cannot be a detective's colour
-			throw new IllegalArgumentException("MrX should be Black");
-		if(missingTickets(mrX))
-			throw new IllegalArgumentException(("MrX is missing tickets"));
-
+		checkValidMrx(mrX);
 		for( PlayerConfiguration x : restOfTheDetectives){
 			checkValidDetective(x);
 			players.add(new ScotlandYardPlayer(x.player,x.colour,x.location,x.tickets));
@@ -69,6 +59,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 		checkOverlap(players);
 		checkDuplicate(players);
 	}
+
+	private void checkValidMrx(PlayerConfiguration mrX){
+        if(mrX.colour != BLACK) // mrX cannot be a detective's colour
+            throw new IllegalArgumentException("MrX should be Black");
+        if(missingTickets(mrX))
+            throw new IllegalArgumentException(("MrX is missing tickets"));
+    }
 
 	private void checkOverlap(List<ScotlandYardPlayer> players){
 		Set<Integer> locations = new HashSet<>();
