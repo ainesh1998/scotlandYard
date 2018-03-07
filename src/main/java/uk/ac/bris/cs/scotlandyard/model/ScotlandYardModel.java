@@ -1,11 +1,7 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableCollection;
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableSet;
+import static java.util.Collections.*;
 import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.BLACK;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.BLUE;
@@ -21,10 +17,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
+import sun.security.x509.EDIPartyName;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 import uk.ac.bris.cs.gamekit.graph.Node;
+
+import javax.print.attribute.standard.Destination;
 
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
@@ -35,7 +34,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
 	private int currentPlayer;
-	private Set<Move> validMoves;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -122,17 +120,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	   //Player player1 = players.get(currentPlayer).player();
 	   ScotlandYardPlayer player1 = players.get(currentPlayer);
 	   player1.player().makeMove(this, player1.location(),new HashSet<>(),this);
-       /* if(this == null){
-            throw new NullPointerException("error");
-        }
-        for(ScotlandYardPlayer x : players){
-            x.player().makeMove(requireNonNull(this),x.location(),new HashSet<>(), requireNonNull(this));
-            currentPlayer += 1;
-        }
-        currentRound += 1; */
+	   currentPlayer += 1;
+
 
 }
-    private Set<Move> validMove(Colour player){ //Generates all possible moves player can make
+   /* private Set<Move> validMove(Colour player){ //Generates all possible moves player can make
 	    Node<Integer> position = new Node(getPlayerLocation(player).get());
 	    Collection <Edge<Integer,Transport>> edges;
 	    Set<Move> moves = new HashSet<>();
@@ -156,12 +148,32 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
         moves.addAll(ticketMoves);
 	    moves.addAll(doubles);
 	    return moves;
-    }
+    } */
+   private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
+     //  Node<Integer> position = new Node(getPlayerLocation(player).get());
+       Collection<Edge<Integer,Transport>> edges = map.getEdges();
+       Set<Move> moves = new HashSet<>();
+       for(Edge<Integer,Transport> e : edges){
+           Ticket ticket = fromTransport(e.data());
+           int destination = e.destination().value();
+           moves.add(new TicketMove(player,ticket,destination));
+           if(player.isMrX()){ // mrX can make double moves
+               Node<Integer> pos = e.destination();
+               for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){
+                   Ticket ticket2 = fromTransport(x.data());
+                   int destination2 = x.destination().value();
+                   moves.add(new DoubleMove(player,ticket,destination,ticket2,destination2));
+               }
+           }
+       }
+       moves.add(new PassMove(player)); //player can also choose not to move
+       return moves;
+   }
 
 	@Override
     public void accept(Move m) {
 	    requireNonNull(m);
-	    Set<Move> validMoves = validMove(getCurrentPlayer());
+	    Set<Move> validMoves = validMove(m.colour());
 	    if(!validMoves.contains(m))
 	        throw new IllegalArgumentException("illegal move");
 	    currentPlayer += 1;
