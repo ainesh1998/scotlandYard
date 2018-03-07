@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
+import uk.ac.bris.cs.gamekit.graph.Node;
 
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
@@ -34,6 +35,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
 	private int currentPlayer;
+	private Set<Move> validMoves;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -117,20 +119,52 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public void startRotate() {
-	   // Player player1 = players.get(currentPlayer).player();
-        //player1.makeMove(requireNonNull(this), getPlayerLocation(getCurrentPlayer()).get(),new HashSet<Move>(),requireNonNull(this));
-        if(this == null){
+	   //Player player1 = players.get(currentPlayer).player();
+	   ScotlandYardPlayer player1 = players.get(currentPlayer);
+	   player1.player().makeMove(this, player1.location(),new HashSet<>(),this);
+       /* if(this == null){
             throw new NullPointerException("error");
         }
         for(ScotlandYardPlayer x : players){
             x.player().makeMove(requireNonNull(this),x.location(),new HashSet<>(), requireNonNull(this));
             currentPlayer += 1;
         }
-        currentRound += 1;
+        currentRound += 1; */
+
 }
+    private Set<Move> validMove(Colour player){ //Generates all possible moves player can make
+	    Node<Integer> position = new Node(getPlayerLocation(player).get());
+	    Collection <Edge<Integer,Transport>> edges;
+	    Set<Move> moves = new HashSet<>();
+	    Set<TicketMove> ticketMoves = new HashSet<>();
+	    Set<DoubleMove> doubles = new HashSet<>(); // required for mrX
+	    edges = map.getEdgesFrom(position);
+	    for(Edge<Integer,Transport> x :edges){ //get all possible ticket moves
+	        Ticket ticket = fromTransport(x.data());
+	        int destination = x.destination().value();
+	        ticketMoves.add(new TicketMove(player, ticket, destination));
+
+	        if(player.isMrX()){ //mrX can also make double Moves
+	            Node<Integer> sndPos = x.destination();
+	            for(Edge<Integer,Transport> y : map.getEdgesFrom(sndPos)) {
+	                Ticket ticket2 = fromTransport(y.data());
+	                int destination2 = y.destination().value();
+	                doubles.add(new DoubleMove(player,ticket,destination,ticket2,destination2));
+                }
+            }
+        }
+        moves.addAll(ticketMoves);
+	    moves.addAll(doubles);
+	    return moves;
+    }
 
 	@Override
     public void accept(Move m) {
+	    requireNonNull(m);
+	    Set<Move> validMoves = validMove(getCurrentPlayer());
+	    if(!validMoves.contains(m))
+	        throw new IllegalArgumentException("illegal move");
+	    currentPlayer += 1;
 
     }
 

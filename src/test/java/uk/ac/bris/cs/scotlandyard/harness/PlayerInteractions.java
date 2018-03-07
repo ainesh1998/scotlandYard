@@ -104,7 +104,8 @@ public final class PlayerInteractions {
 	interface MakeMoveInteraction extends Interaction<MakeMove> {}
 
 	public interface PlayerMethods {
-		Action makeMove();
+		Action
+		makeMove();
 	}
 
 	public interface Action extends MakeMoveInteraction {

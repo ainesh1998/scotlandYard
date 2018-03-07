@@ -21,5 +21,4 @@ public interface Player {
 	 *        moves, the game cannot
 	 */
 	void makeMove(ScotlandYardView view, int location, Set<Move> moves, Consumer<Move> callback);
-
 }
