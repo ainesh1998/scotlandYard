@@ -124,25 +124,25 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 }
 
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
-       ScotlandYardPlayer p = null ;
-       for(ScotlandYardPlayer y : players){
-           if(y.colour().equals(player)) { //selects correct Player
-               p = y;
-           }
-       }
+       ScotlandYardPlayer p = getScotPlayer(player);
+
        Node<Integer> position = new Node(p.location()); //have no idea how to get rid of this warning
        Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
            Ticket ticket = fromTransport(e.data());
            int destination = e.destination().value();
-           moves.add(new TicketMove(player,ticket,destination)); // Adds all possible ticket Moves
-           if(player.isMrX()){ // mrX can make double moves
+           if(!getDetectiveLocations().contains(destination)) { //you can't move there if another detective occupies it
+			   moves.add(new TicketMove(player, ticket, destination)); // Adds all possible ticket Moves
+		   }
+		   if(player.isMrX()){ // mrX can make double moves
                Node<Integer> pos = e.destination();
                for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){ //get edges from 2nd node reached
                    Ticket ticket2 = fromTransport(x.data());
                    int destination2 = x.destination().value();
-                   moves.add(new DoubleMove(player,ticket,destination,ticket2,destination2));
+				   if(!getDetectiveLocations().contains(destination)) {
+					   moves.add(new DoubleMove(player, ticket, destination, ticket2, destination2));
+				   }
                }
            }
        }
@@ -151,12 +151,30 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
        return moves;
    }
 
+   private List<Integer> getDetectiveLocations(){
+		List<Integer> locations = new ArrayList<>();
+		for(ScotlandYardPlayer p: players){
+			if(p.isDetective())
+				locations.add(p.location());
+		}
+		return locations;
+   }
+
+   private ScotlandYardPlayer getScotPlayer(Colour colour){
+		for(ScotlandYardPlayer x : players){
+			if(x.colour().equals(colour)){
+				return x;
+			}
+		}
+		throw new IllegalArgumentException("colour not in list");
+   }
+
 	@Override
     public void accept(Move m) {
 	    requireNonNull(m);
 	    Set<Move> validMoves = validMove(m.colour());
-	    /*if(!validMoves.contains(m))
-	        throw new IllegalArgumentException("illegal move");*/
+	    if(!validMoves.contains(m))
+	        throw new IllegalArgumentException("illegal move");
 
        if(m.colour().isMrX()){
            if(m instanceof DoubleMove)
