@@ -155,18 +155,18 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
     public void accept(Move m) {
 	    requireNonNull(m);
 	    Set<Move> validMoves = validMove(m.colour());
-	    if(!validMoves.contains(m))
-	        throw new IllegalArgumentException("illegal move");
+	    /*if(!validMoves.contains(m))
+	        throw new IllegalArgumentException("illegal move");*/
 
        if(m.colour().isMrX()){
            if(m instanceof DoubleMove)
                currentRound += 2;
+           else currentRound += 1;
        }
        if(currentPlayer < getPlayers().size() - 1){
            currentPlayer += 1;
            startRotate();
        }else{
-               currentRound += 1;
                currentPlayer = 0; // starts at mrX again
 
        }
