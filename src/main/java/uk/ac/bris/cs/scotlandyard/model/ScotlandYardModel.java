@@ -134,6 +134,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
            int destination = e.destination().value();
           if(!getDetectiveLocations().contains(destination)) { //you can't move there if another detective occupies it
 			   moves.add(new TicketMove(player, ticket, destination)); // Adds all possible ticket Moves
+			  if(!ticket.equals(SECRET) && player.isMrX())
+				  moves.add(new TicketMove(player, SECRET, destination));
 		   }
 		   if(player.isMrX()){ // mrX can make double moves
                Node<Integer> pos = e.destination();
@@ -142,6 +144,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                    int destination2 = x.destination().value();
 				   if(!getDetectiveLocations().contains(destination)) {
 					   moves.add(new DoubleMove(player, ticket, destination, ticket2, destination2));
+					   if(!ticket2.equals(SECRET))
+						   moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
 				   }
                }
            }
