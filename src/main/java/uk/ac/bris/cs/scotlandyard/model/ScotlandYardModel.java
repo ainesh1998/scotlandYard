@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import sun.security.krb5.SCDynamicStoreConfig;
 import sun.security.x509.EDIPartyName;
 import uk.ac.bris.cs.gamekit.graph.Edge;
@@ -123,12 +124,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private Set<Move> getTicketMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player){
 		Ticket ticket = fromTransport(e.data());
 		int destination = e.destination().value();
-		if(!getDetectiveLocations().contains(destination) && getScotPlayer(player).hasTickets(ticket) ){
+        Boolean noMoreRounds = (getCurrentRound() == rounds.size() - 1 );
+        if(!getDetectiveLocations().contains(destination) && getScotPlayer(player).hasTickets(ticket) ){
 			moves.add(new TicketMove(player,ticket,destination));
 			if(!ticket.equals(SECRET) && player.isMrX() && getScotPlayer(player).hasTickets(SECRET))
 				moves.add(new TicketMove(player,ticket,destination));
 		}
-		if(player.isMrX() && getScotPlayer(player).hasTickets(DOUBLE)){
+		if(player.isMrX() && getScotPlayer(player).hasTickets(DOUBLE) && !noMoreRounds){
 			Node<Integer> pos = e.destination();
 			for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){
 				moves.addAll(getDoubleMoves(x,moves,player,ticket,destination));
