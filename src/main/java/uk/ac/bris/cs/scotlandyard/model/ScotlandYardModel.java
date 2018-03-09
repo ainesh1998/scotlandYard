@@ -132,7 +132,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
        for(Edge<Integer,Transport> e : edges){
            Ticket ticket = fromTransport(e.data());
            int destination = e.destination().value();
-           if(!getDetectiveLocations().contains(destination)) { //you can't move there if another detective occupies it
+          if(!getDetectiveLocations().contains(destination)) { //you can't move there if another detective occupies it
 			   moves.add(new TicketMove(player, ticket, destination)); // Adds all possible ticket Moves
 		   }
 		   if(player.isMrX()){ // mrX can make double moves
@@ -146,7 +146,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                }
            }
        }
-       if(moves.size() == 0 && player.isDetective()) // if there's no available place to move
+        // if there's no available place to move for a detective
+       if(player.isDetective())
            moves.add(new PassMove(player));        // the player passes if they're a detective
        return moves;
    }
@@ -173,8 +174,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
     public void accept(Move m) {
 	    requireNonNull(m);
 	    Set<Move> validMoves = validMove(m.colour());
-	    if(!validMoves.contains(m))
-	        throw new IllegalArgumentException("illegal move");
+	   /* if(!validMoves.contains(m))
+	        throw new IllegalArgumentException("illegal move"); */
 
        if(m.colour().isMrX()){
            if(m instanceof DoubleMove)
