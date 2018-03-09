@@ -119,9 +119,37 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	  ScotlandYardPlayer p = players.get(currentPlayer);
 	  p.player().makeMove(this,p.location(),validMove(p.colour()),this);
 
+	}
+	private Set<Move> getTicketMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player){
+		Ticket ticket = fromTransport(e.data());
+		int destination = e.destination().value();
+		if(!getDetectiveLocations().contains(destination) && getScotPlayer(player).hasTickets(ticket) ){
+			moves.add(new TicketMove(player,ticket,destination));
+			if(!ticket.equals(SECRET) && player.isMrX() && getScotPlayer(player).hasTickets(SECRET))
+				moves.add(new TicketMove(player,ticket,destination));
+		}
+		if(player.isMrX() && getScotPlayer(player).hasTickets(DOUBLE)){
+			Node<Integer> pos = e.destination();
+			for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){
+				moves.addAll(getDoubleMoves(x,moves,player,ticket,destination));
+			}
+		}
+		return moves;
+	}
+	private Set<Move> getDoubleMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player,Ticket ticket,int destination){
+		Ticket ticket2 = fromTransport(e.data());
+		int destination2 = e.destination().value();
+		Boolean sameTickets = (ticket.equals(ticket2) && getScotPlayer(player).tickets().get(ticket) < 2 );
+		if(!getDetectiveLocations().contains(destination) && !getDetectiveLocations().contains(destination2) && getScotPlayer(player).hasTickets(ticket2)) {
+			if(!sameTickets){
+				moves.add(new DoubleMove(player, ticket, destination, ticket2, destination2));
+				if(!ticket2.equals(SECRET) && getScotPlayer(player).hasTickets(SECRET))
+					moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
+			}
 
-
-}
+		}
+		return moves;
+	}
 
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
        ScotlandYardPlayer p = getScotPlayer(player);
@@ -130,25 +158,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
        Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
-           Ticket ticket = fromTransport(e.data());
-           int destination = e.destination().value();
-          if(!getDetectiveLocations().contains(destination)) { //you can't move there if another detective occupies it
-			   moves.add(new TicketMove(player, ticket, destination)); // Adds all possible ticket Moves
-			  if(!ticket.equals(SECRET) && player.isMrX())
-				  moves.add(new TicketMove(player, SECRET, destination));
-		   }
-		   if(player.isMrX()){ // mrX can make double moves
-               Node<Integer> pos = e.destination();
-               for(Edge<Integer,Transport> x: map.getEdgesFrom(pos)){ //get edges from 2nd node reached
-                   Ticket ticket2 = fromTransport(x.data());
-                   int destination2 = x.destination().value();
-				   if(!getDetectiveLocations().contains(destination)) {
-					   moves.add(new DoubleMove(player, ticket, destination, ticket2, destination2));
-					   if(!ticket2.equals(SECRET))
-						   moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
-				   }
-               }
-           }
+           moves = getTicketMoves(e,moves,player);
        }
         // if there's no available place to move for a detective
        if(player.isDetective())
