@@ -193,8 +193,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
             requireNonNull(m);
             Set<Move> validMoves = validMove(m.colour());
+            ScotlandYardPlayer p = getScotPlayer(m.colour());
             if(!validMoves.contains(m))
                 throw new IllegalArgumentException("illegal move");
+            //Location is updated based on move
+            if(m instanceof TicketMove){
+                p.location(((TicketMove) m).destination());
+            }
+            if(m instanceof DoubleMove){
+                p.location(((DoubleMove) m).finalDestination());
+            }
+
 
             if(m.colour().isMrX()){
                 if(m instanceof DoubleMove)
