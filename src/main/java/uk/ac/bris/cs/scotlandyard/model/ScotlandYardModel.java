@@ -34,6 +34,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
 	private int currentPlayer;
+	private boolean gameOver = false;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -125,10 +126,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 		Ticket ticket = fromTransport(e.data());
 		int destination = e.destination().value();
         Boolean noMoreRounds = (getCurrentRound() == rounds.size() - 1 );
-        if(!getDetectiveLocations().contains(destination) && getScotPlayer(player).hasTickets(ticket) ){
-			moves.add(new TicketMove(player,ticket,destination));
-			if(!ticket.equals(SECRET) && player.isMrX() && getScotPlayer(player).hasTickets(SECRET))
-				moves.add(new TicketMove(player,ticket,destination));
+        if(!getDetectiveLocations().contains(destination)){
+            if(getScotPlayer(player).hasTickets(ticket))
+                moves.add(new TicketMove(player,ticket,destination));
+			if(player.isMrX() && getScotPlayer(player).hasTickets(SECRET))
+				moves.add(new TicketMove(player,SECRET,destination));
 		}
 		if(player.isMrX() && getScotPlayer(player).hasTickets(DOUBLE) && !noMoreRounds){
 			Node<Integer> pos = e.destination();
@@ -188,23 +190,28 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
     public void accept(Move m) {
-	    requireNonNull(m);
-	    Set<Move> validMoves = validMove(m.colour());
-	   /* if(!validMoves.contains(m))
-	        throw new IllegalArgumentException("illegal move"); */
 
-       if(m.colour().isMrX()){
-           if(m instanceof DoubleMove)
-               currentRound += 2;
-           else currentRound += 1;
-       }
-       if(currentPlayer < getPlayers().size() - 1){
-           currentPlayer += 1;
-           startRotate();
-       }else{
-               currentPlayer = 0; // starts at mrX again
+            requireNonNull(m);
+            Set<Move> validMoves = validMove(m.colour());
+            if(!validMoves.contains(m))
+                throw new IllegalArgumentException("illegal move");
 
-       }
+            if(m.colour().isMrX()){
+                if(m instanceof DoubleMove)
+                    currentRound += 2;
+                else currentRound += 1;
+            }
+			if(currentRound >= rounds.size()){
+				gameOver = true;
+			}
+			if(!gameOver){ //If game is over then no one should make any more moves
+                if(currentPlayer < getPlayers().size() - 1){
+                    currentPlayer += 1;
+                    startRotate();
+                }else{
+                    currentPlayer = 0; // starts at mrX again
+                }
+            }
 
     }
 
@@ -255,7 +262,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public boolean isGameOver() {
-		return false;
+		return gameOver;
 	}
 
 	@Override
