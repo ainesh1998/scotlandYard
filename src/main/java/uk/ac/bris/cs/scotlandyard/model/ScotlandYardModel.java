@@ -219,7 +219,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 				currentRound += 1;
 			}
 			if(currentRound >= rounds.size()){
-				gameOver = true;
+                if(currentRound == 1 && p.isMrX()) //This just undoes the increment
+                    //Don't think it's efficient
+                    currentRound = 0;
+                else
+				    gameOver = true;
 			}
 
 
