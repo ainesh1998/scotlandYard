@@ -35,6 +35,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private int currentRound = 0;
 	private int currentPlayer;
 	private boolean gameOver = false;
+	private int xLastLocation = 0;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -190,38 +191,47 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
     public void accept(Move m) {
-
             requireNonNull(m);
             Set<Move> validMoves = validMove(m.colour());
             ScotlandYardPlayer p = getScotPlayer(m.colour());
+            ScotlandYardPlayer mrX = getScotPlayer(BLACK);
             if(!validMoves.contains(m))
                 throw new IllegalArgumentException("illegal move");
             //Location is updated based on move
             if(m instanceof TicketMove){
                 p.location(((TicketMove) m).destination());
+                p.removeTicket(((TicketMove) m).ticket());
+                if(p.isDetective())
+                	mrX.addTicket(((TicketMove) m).ticket());
             }
             if(m instanceof DoubleMove){
                 p.location(((DoubleMove) m).finalDestination());
+                p.removeTicket(DOUBLE);
+                p.removeTicket(((DoubleMove) m).firstMove().ticket());
+				p.removeTicket(((DoubleMove) m).secondMove().ticket());
             }
 
 
-            if(m.colour().isMrX()){
-                if(m instanceof DoubleMove)
-                    currentRound += 2;
-                else currentRound += 1;
-            }
+			if(m.colour().isMrX()){
+				//if(m instanceof DoubleMove)
+				//	currentRound += 1;
+				//else currentRound += 1;
+				currentRound += 1;
+			}
 			if(currentRound >= rounds.size()){
 				gameOver = true;
 			}
+
+
 			if(!gameOver){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
                     currentPlayer += 1;
                     startRotate();
-                }else{
+                }
+                else{
                     currentPlayer = 0; // starts at mrX again
                 }
             }
-
     }
 
 	@Override
@@ -251,8 +261,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 		for (ScotlandYardPlayer player : players) {
 		    if (player.colour() == colour) {
 		        if (player.isMrX()) {
-		            if (rounds.get(getCurrentRound())) return Optional.of(player.location());
-                    else return Optional.of(0); // if MrX is hidden this round, return 0
+		            if (rounds.get(getCurrentRound()) && currentRound != 0) {
+		            	xLastLocation = player.location();
+		            	return Optional.of(player.location());
+		            }
+                    else return Optional.of(xLastLocation); // if MrX is hidden this round, return 0
 
                 }
 		        return Optional.of(player.location());
