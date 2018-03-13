@@ -197,7 +197,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
     public void accept(Move m) {
-            int z = currentRound;
             checkZeroTwice += 1;
             requireNonNull(m);
             Set<Move> validMoves = validMove(m.colour());
@@ -212,8 +211,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 if(p.isDetective())
                 	mrX.addTicket(((TicketMove) m).ticket());
             }
+            int z = currentRound;
             int plo = p.location();
-
             int location = getPlayerLocation(BLACK).get();
             if(m instanceof DoubleMove){
                 p.location(((DoubleMove) m).finalDestination());
