@@ -121,10 +121,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	@Override
 	public void startRotate() {
 
-	  ScotlandYardPlayer p = players.get(currentPlayer);
+	  ScotlandYardPlayer p = players.get(0);
 	  p.player().makeMove(this,p.location(),validMove(p.colour()),this);
 
 	}
+	private void takeMove(){
+        ScotlandYardPlayer p = players.get(currentPlayer);
+        p.player().makeMove(this,p.location(),validMove(p.colour()),this);
+    }
 	private Set<Move> getTicketMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player){
 		Ticket ticket = fromTransport(e.data());
 		int destination = e.destination().value();
@@ -193,7 +197,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
     public void accept(Move m) {
-
+            int z = currentRound;
             checkZeroTwice += 1;
             requireNonNull(m);
             Set<Move> validMoves = validMove(m.colour());
@@ -209,7 +213,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 	mrX.addTicket(((TicketMove) m).ticket());
             }
             int plo = p.location();
-            int z = currentRound;
+
             int location = getPlayerLocation(BLACK).get();
             if(m instanceof DoubleMove){
                 p.location(((DoubleMove) m).finalDestination());
@@ -238,7 +242,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 			if(!gameOver){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
                     currentPlayer += 1;
-                    startRotate();
+                    takeMove();
                 }
                 else{
                     currentPlayer = 0; // starts at mrX again
