@@ -206,7 +206,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
             ScotlandYardPlayer mrX = getScotPlayer(BLACK);
             revealRound = players.get(currentPlayer).isMrX() && rounds.get(currentRound);
 
-
             if(!validMoves.contains(m))
                 throw new IllegalArgumentException("illegal move");
             //Location is updated based on move
@@ -227,8 +226,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 				p.removeTicket(((DoubleMove) m).secondMove().ticket());
             }
 
-
-
 			if(currentRound == rounds.size()){
                 if(rounds.size() == 1) { //This just undoes the increment
                     //Don't think it's efficient
@@ -245,7 +242,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 				currentRound += 1;
 			}
 
-			if(!gameOver){ //If game is over then no one should make any more moves
+			if(!isGameOver()){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
                     currentPlayer += 1;
                     takeMove();
@@ -307,6 +304,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public boolean isGameOver() {
+	    boolean mrXStuck = validMove(BLACK).isEmpty();
+	    boolean endOfRot = currentPlayer == players.size() -1;
+	    if(mrXStuck && endOfRot)
+	        gameOver = true;
 		return gameOver;
 	}
 
