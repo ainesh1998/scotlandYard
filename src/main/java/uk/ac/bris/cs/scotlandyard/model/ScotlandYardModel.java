@@ -128,7 +128,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private void takeMove(){
         ScotlandYardPlayer p = players.get(currentPlayer);
         p.player().makeMove(this,p.location(),validMove(p.colour()),this);
-    }//if it were that it would have more moves. I
+    }
+
 	private Set<Move> getTicketMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player){
 		Ticket ticket = fromTransport(e.data());
 		int destination = e.destination().value();
@@ -157,9 +158,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 				if(!ticket2.equals(SECRET) && getScotPlayer(player).hasTickets(SECRET)) {
                     moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
                     moves.add(new DoubleMove(player, SECRET, destination, ticket2, destination2));
-                    if(getScotPlayer(player).tickets().get(SECRET) >= 2) {
-                        moves.add(new DoubleMove(player, SECRET, destination, SECRET, destination2));
-                    }
+                    moves.add(new DoubleMove(player, SECRET, destination, SECRET, destination2));
                 }
 			}
 
