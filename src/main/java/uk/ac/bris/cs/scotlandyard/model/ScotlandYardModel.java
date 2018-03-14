@@ -36,8 +36,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private int currentPlayer;
 	private boolean gameOver = false;
 	private int xLastLocation = 0;
-	private int checkZeroTwice = 0;
-	private int xCurrentLocation;
+	private boolean revealRound = false;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -201,11 +200,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
     public void accept(Move m) {
-            checkZeroTwice += 1;
             requireNonNull(m);
             Set<Move> validMoves = validMove(m.colour());
             ScotlandYardPlayer p = getScotPlayer(m.colour());
             ScotlandYardPlayer mrX = getScotPlayer(BLACK);
+            revealRound = players.get(currentPlayer).isMrX() && rounds.get(currentRound);
+
+
             if(!validMoves.contains(m))
                 throw new IllegalArgumentException("illegal move");
             //Location is updated based on move
@@ -216,7 +217,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 	mrX.addTicket(((TicketMove) m).ticket());
             }
             int z = currentRound;
-            int plo = p.location();
+			boolean b = revealRound;
+			int plo = p.location();
             int location = getPlayerLocation(BLACK).get();
             if(m instanceof DoubleMove){
                 p.location(((DoubleMove) m).finalDestination());
@@ -226,13 +228,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
             }
 
 
-			if(m.colour().isMrX()){
-				//if(m instanceof DoubleMove)
-				//	currentRound += 1;
-				//else currentRound += 1;
-				currentRound += 1;
-			}
-			if(currentRound >= rounds.size()){
+
+			if(currentRound == rounds.size()){
                 if(rounds.size() == 1) { //This just undoes the increment
                     //Don't think it's efficient
                     currentRound = 0;
@@ -241,6 +238,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 				    gameOver = true;
 			}
 
+			if(m.colour().isMrX()){
+				//if(m instanceof DoubleMove)
+				//	currentRound += 1;
+				//else currentRound += 1;
+				currentRound += 1;
+			}
 
 			if(!gameOver){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
@@ -249,6 +252,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 }
                 else{
                     currentPlayer = 0; // starts at mrX again
+
                 }
             }
     }
@@ -280,9 +284,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 		for (ScotlandYardPlayer player : players) {
 		    if (player.colour() == colour) {
 		        if (player.isMrX()) {
-		            if (rounds.get(currentRound)) {
-		                if(currentRound == 0 && checkZeroTwice == 0 )
-		                    return Optional.of(0);
+		            if (revealRound) {
 		            	xLastLocation = player.location();
 		            	return Optional.of(player.location());
 		            }
