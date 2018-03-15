@@ -215,10 +215,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 if(p.isDetective())
                 	mrX.addTicket(((TicketMove) m).ticket());
             }
-            int z = currentRound;
-			boolean b = revealRound;
-			int plo = p.location();
-            int location = getPlayerLocation(BLACK).get();
             if(m instanceof DoubleMove){
                 p.location(((DoubleMove) m).finalDestination());
                 p.removeTicket(DOUBLE);
@@ -226,9 +222,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 				p.removeTicket(((DoubleMove) m).secondMove().ticket());
             }
 
-			if(currentRound == rounds.size()){
-				    gameOver = true;
-			}
+			updateGameOver();
 
 			if(m.colour().isMrX()){
 				currentRound += 1;
@@ -244,6 +238,34 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
                 }
             }
+    }
+    private void updateGameOver() {
+	    boolean roundsUsed = currentRound == rounds.size();
+        boolean mrXStuck = validMove(BLACK).isEmpty();
+        boolean endOfRot = currentPlayer == players.size() -1;
+        boolean dStuck = areDetectivesStuck();
+        gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && endOfRot;
+
+    }
+
+    private boolean areDetectivesStuck() {
+        boolean isStuck = true;
+        for (ScotlandYardPlayer p : players) {
+            if (p.isDetective()) {
+                isStuck = isStuck && validMove(p.colour()).size() == 1; // if detectives are stuck, they should only have the pass move
+            }
+        }
+        return isStuck;
+    }
+
+    private boolean isMrXCaptured() {
+	    ScotlandYardPlayer mrx = getScotPlayer(BLACK);
+        for (ScotlandYardPlayer p : players) {
+            if (p.isDetective() && p.location() == mrx.location()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 	@Override
@@ -296,10 +318,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public boolean isGameOver() {
-	    boolean mrXStuck = validMove(BLACK).isEmpty();
-	    boolean endOfRot = currentPlayer == players.size() -1;
-	    if(mrXStuck && endOfRot)
-	        gameOver = true;
 		return gameOver;
 	}
 
