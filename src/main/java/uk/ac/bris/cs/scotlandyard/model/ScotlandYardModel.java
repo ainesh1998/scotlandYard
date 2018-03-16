@@ -37,6 +37,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private boolean gameOver = false;
 	private int xLastLocation = 0;
 	private boolean revealRound = false;
+	private boolean gameNotStarted = true;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -62,6 +63,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 		checkValidDetective(firstDetective);
 		checkOverlap(players);
 		checkDuplicate(players);
+		updateGameOver();
 	}
 
 	private void checkValidMrx(PlayerConfiguration mrX){
@@ -119,9 +121,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public void startRotate() {
-
-	  ScotlandYardPlayer p = players.get(0);
-	  p.player().makeMove(this,p.location(),validMove(p.colour()),this);
+		gameNotStarted = false;
+		if(gameOver)
+			throw new IllegalStateException();
+	   ScotlandYardPlayer p = players.get(0);
+	   p.player().makeMove(this,p.location(),validMove(p.colour()),this);
 
 	}
 	private void takeMove(){
@@ -244,7 +248,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
         boolean mrXStuck = validMove(BLACK).isEmpty();
         boolean endOfRot = currentPlayer == players.size() -1;
         boolean dStuck = areDetectivesStuck();
-        gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && endOfRot;
+        gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
 
     }
 
