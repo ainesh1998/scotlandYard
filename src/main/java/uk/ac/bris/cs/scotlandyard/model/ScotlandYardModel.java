@@ -247,7 +247,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	    boolean roundsUsed = currentRound == rounds.size();
         boolean mrXStuck = validMove(BLACK).isEmpty();
         boolean endOfRot = currentPlayer == players.size() -1;
-        boolean dStuck = areDetectivesStuck();
         gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
 
     }
@@ -256,7 +255,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
         boolean isStuck = true;
         for (ScotlandYardPlayer p : players) {
             if (p.isDetective()) {
-                isStuck = isStuck && validMove(p.colour()).size() == 1; // if detectives are stuck, they should only have the pass move
+				PassMove pass = new PassMove(p.colour());
+                isStuck = isStuck && validMove(p.colour()).contains(pass); // if detectives are stuck, they should only have the pass move
             }
         }
         return isStuck;
