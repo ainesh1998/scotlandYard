@@ -38,6 +38,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private int xLastLocation = 0;
 	private boolean revealRound = false;
 	private boolean gameNotStarted = true;
+	private List<Spectator> spectators = new ArrayList<>();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -110,13 +111,18 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	@Override
 	public void registerSpectator(Spectator spectator) {
 		// TODO
-		throw new RuntimeException("Implement me");
+        if(spectators.contains(spectator))
+            throw new IllegalArgumentException("spectator already registered");
+        spectators.add(requireNonNull(spectator));
 	}
 
 	@Override
 	public void unregisterSpectator(Spectator spectator) {
 		// TODO
-		throw new RuntimeException("Implement me");
+        requireNonNull(spectator);
+        if(!spectators.contains(spectator))
+            throw new IllegalArgumentException("spectator wasn't registered");
+        spectators.remove(requireNonNull(spectator));
 	}
 
 	@Override
@@ -235,9 +241,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 			if(!isGameOver()){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
                     currentPlayer += 1;
+                    updateSpectators(m);
                     takeMove();
                 }
                 else{
+                    updateSpectators(m);
                     currentPlayer = 0; // starts at mrX again
 
                 }
@@ -249,6 +257,15 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
         boolean endOfRot = currentPlayer == players.size() -1;
         gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
 
+    }
+    private void updateSpectators(Move m){
+	    Ticket t;
+	    ScotlandYardPlayer p = players.get(currentPlayer - 1);
+	    for(Spectator s : spectators){
+	        if(p.isMrX())
+	            s.onRoundStarted(this,currentRound);// if previous player was mrX a new round has started
+	        s.onMoveMade(this, m);
+        }
     }
 
     private boolean areDetectivesStuck() {
@@ -275,7 +292,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	@Override
 	public Collection<Spectator> getSpectators() {
 		// TODO
-		throw new RuntimeException("Implement me");
+		return spectators;
 	}
 
 	@Override
