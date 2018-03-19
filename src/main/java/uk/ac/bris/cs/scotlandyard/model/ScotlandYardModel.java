@@ -39,6 +39,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	private boolean revealRound = false;
 	private boolean gameNotStarted = true;
 	private List<Spectator> spectators = new ArrayList<>();
+	private Set<Colour> winningPlayers = new HashSet<>();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 							 PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -252,15 +253,29 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 					}
 
                 }
-            }
+            }else{
+				for(Spectator s: spectators){
+					s.onGameOver(this,winningPlayers);
+				}
+			}
     }
     private void updateGameOver() {
 	    boolean roundsUsed = currentRound == rounds.size();
         boolean mrXStuck = validMove(BLACK).isEmpty();
         boolean endOfRot = currentPlayer == players.size() -1;
         gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
-
+        if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured())){
+        	winningPlayers.add(players.get(0).colour());
+		}
+		if(mrXStuck||isMrXCaptured()){
+        	for(ScotlandYardPlayer p : players){
+        		if(p.isDetective()){
+        			winningPlayers.add(p.colour());
+				}
+			}
+		}
     }
+
     private void updateSpectators(Move m){
 	    Ticket t;
 	    ScotlandYardPlayer p = players.get(currentPlayer - 1);
@@ -295,7 +310,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	@Override
 	public Collection<Spectator> getSpectators() {
 		// TODO
-		return spectators;
+		return Collections.unmodifiableList(spectators);
 	}
 
 	@Override
@@ -310,7 +325,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
-		return Collections.unmodifiableSet(new HashSet<>());
+		return Collections.unmodifiableSet(winningPlayers);
 	}
 
 	// The location of a player with a given colour in its last known location.
