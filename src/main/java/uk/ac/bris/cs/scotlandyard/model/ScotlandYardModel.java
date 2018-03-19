@@ -231,6 +231,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 p.removeTicket(DOUBLE);
                 p.removeTicket(((DoubleMove) m).firstMove().ticket());
 				p.removeTicket(((DoubleMove) m).secondMove().ticket());
+				updateDoubleSpec(m);
             }
 
 			updateGameOver();
@@ -242,11 +243,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 			if(!isGameOver()){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
                     currentPlayer += 1;
-                    updateSpectators(m);
+                    if(!(m instanceof DoubleMove))
+                        updateSpectators(m);
                     takeMove();
                 }
                 else{
-                    updateSpectators(m);
+                    if(!(m instanceof DoubleMove))
+                        updateSpectators(m);
                     currentPlayer = 0; // starts at mrX again
 					for(Spectator s: spectators){
 						s.onRotationComplete(this);
@@ -278,7 +281,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
     }
 
     private void updateSpectators(Move m){
-	    Ticket t;
 	    ScotlandYardPlayer p = players.get(currentPlayer - 1);
 	    for(Spectator s : spectators){
 	        if(m instanceof DoubleMove){
@@ -292,6 +294,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 s.onMoveMade(this, m);
             }
         }
+    }
+    private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
+	    for(Spectator s: spectators){
+	        s.onMoveMade(this,m);
+	        currentRound += 1;
+	        s.onRoundStarted(this,currentRound);
+	        s.onMoveMade(this,((DoubleMove) m ).firstMove());
+	        s.onRoundStarted(this,currentRound);
+	        currentRound += 1;
+	        s.onMoveMade(this,((DoubleMove) m).secondMove());
+	        currentRound -= 2;
+        }
+
     }
 
     private boolean areDetectivesStuck() {
