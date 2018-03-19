@@ -248,9 +248,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                     takeMove();
                 }
                 else{
+                    currentPlayer = 0; // starts at mrX again
                     if(!(m instanceof DoubleMove)) //Double Moves have already been taken care of
                         updateSpectators(m);
-                    currentPlayer = 0; // starts at mrX again
 					for(Spectator s: spectators){
 						s.onRotationComplete(this);
 					}
@@ -281,24 +281,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
     }
 
     private void updateSpectators(Move m){
-	    ScotlandYardPlayer p = players.get(currentPlayer - 1);
+	    ScotlandYardPlayer p = players.get(currentPlayer );
+	  //  currentPlayer = (currentPlayer )
 	    for(Spectator s : spectators){
-	        if(m instanceof DoubleMove){
-	            s.onMoveMade(this,m);
-	            s.onRoundStarted(this,currentRound);
-                s.onMoveMade(this,((DoubleMove) m).firstMove());
-                s.onMoveMade(this,((DoubleMove) m).secondMove());
-            }else{
                 if(p.isMrX())
                     s.onRoundStarted(this,currentRound);// if previous player was mrX a new round has started
                 s.onMoveMade(this, m);
-            }
         }
     }
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
         //if it's not a reveal round then the move should go to the last location
         TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
         TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
+        currentPlayer += 1;
         if(revealRound && !rounds.get(currentRound + 1)){ //second move location should equal to the firstMove destination
             secondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),firstMove.destination());
         }
@@ -312,6 +307,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	        s.onMoveMade(this,secondMove);
 	        currentRound -= 2;
         }
+        currentPlayer -= 1;
     }
 
     private boolean areDetectivesStuck() {
