@@ -248,7 +248,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                     takeMove();
                 }
                 else{
-                    if(!(m instanceof DoubleMove))
+                    if(!(m instanceof DoubleMove)) //Double Moves have already been taken care of
                         updateSpectators(m);
                     currentPlayer = 0; // starts at mrX again
 					for(Spectator s: spectators){
@@ -296,17 +296,22 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
         }
     }
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
+        //if it's not a reveal round then the move should go to the last location
+        TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
+        TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
+        if(revealRound && !rounds.get(currentRound + 1)){ //second move location should equal to the firstMove destination
+            secondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),firstMove.destination());
+        }
 	    for(Spectator s: spectators){
-	        s.onMoveMade(this,m);
+	        s.onMoveMade(this,new DoubleMove(m.colour(),firstMove,secondMove));
 	        currentRound += 1;
 	        s.onRoundStarted(this,currentRound);
-	        s.onMoveMade(this,((DoubleMove) m ).firstMove());
+	        s.onMoveMade(this,firstMove);
 	        s.onRoundStarted(this,currentRound);
 	        currentRound += 1;
-	        s.onMoveMade(this,((DoubleMove) m).secondMove());
+	        s.onMoveMade(this,secondMove);
 	        currentRound -= 2;
         }
-
     }
 
     private boolean areDetectivesStuck() {
