@@ -254,6 +254,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
                 }
             }else{
+			    updateSpectators(m);
 				for(Spectator s: spectators){
 					s.onGameOver(this,winningPlayers);
 				}
@@ -280,9 +281,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 	    Ticket t;
 	    ScotlandYardPlayer p = players.get(currentPlayer - 1);
 	    for(Spectator s : spectators){
-	        if(p.isMrX())
-	            s.onRoundStarted(this,currentRound);// if previous player was mrX a new round has started
-	        s.onMoveMade(this, m);
+	        if(m instanceof DoubleMove){
+	            s.onMoveMade(this,m);
+	            s.onRoundStarted(this,currentRound);
+                s.onMoveMade(this,((DoubleMove) m).firstMove());
+                s.onMoveMade(this,((DoubleMove) m).secondMove());
+            }else{
+                if(p.isMrX())
+                    s.onRoundStarted(this,currentRound);// if previous player was mrX a new round has started
+                s.onMoveMade(this, m);
+            }
         }
     }
 
