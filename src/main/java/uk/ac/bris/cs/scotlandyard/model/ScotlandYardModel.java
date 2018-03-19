@@ -247,6 +247,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
                 else{
                     updateSpectators(m);
                     currentPlayer = 0; // starts at mrX again
+					for(Spectator s: spectators){
+						s.onRotationComplete(this);
+					}
 
                 }
             }
