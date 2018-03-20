@@ -257,6 +257,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 
                 }
             }else{
+				currentPlayer = (currentPlayer == players.size() -1 ) ? 0 : (currentPlayer += 1);
 			    updateSpectators(m);
 				for(Spectator s: spectators){
 					s.onGameOver(this,winningPlayers);
@@ -281,12 +282,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
     }
 
     private void updateSpectators(Move m){
-	    ScotlandYardPlayer p = players.get(currentPlayer );
-	  //  currentPlayer = (currentPlayer )
+	    ScotlandYardPlayer p = (currentPlayer != 0) ? players.get(currentPlayer - 1) : players.get(players.size() - 1);
+	    Move move = (p.isMrX() && !revealRound) ? new TicketMove(m.colour(),((TicketMove) m).ticket(),xLastLocation) :  m;
 	    for(Spectator s : spectators){
-                if(p.isMrX())
+                if(p.isMrX() && !gameOver)
                     s.onRoundStarted(this,currentRound);// if previous player was mrX a new round has started
-                s.onMoveMade(this, m);
+                s.onMoveMade(this, move);
         }
     }
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
