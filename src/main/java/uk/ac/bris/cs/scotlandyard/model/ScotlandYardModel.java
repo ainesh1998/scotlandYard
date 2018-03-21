@@ -230,10 +230,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void visit(DoubleMove m) {
 		ScotlandYardPlayer p = getScotPlayer(m.colour());
 		p.location(m.finalDestination());
-		p.removeTicket(DOUBLE);
-		p.removeTicket(m.firstMove().ticket());
-		p.removeTicket(m.secondMove().ticket());
-		updateDoubleSpec(m);
+        updateDoubleSpec(m);
+
 	}
 
 	@Override
@@ -308,19 +306,31 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     }
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
         //if it's not a reveal round then the move should go to the last location
-		TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
+        ScotlandYardPlayer mrX = getScotPlayer(BLACK);
+        TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
         TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
+        boolean firstMoveTaken = false;
+        boolean secondMoveTaken = false;
         currentPlayer += 1;
+        mrX.removeTicket(DOUBLE);
         if(revealRound && !rounds.get(currentRound + 1)){ //second move location should equal to the firstMove destination
             secondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),firstMove.destination());
         }
 	    for(Spectator s: spectators){
 	        s.onMoveMade(this,new DoubleMove(m.colour(),firstMove,secondMove));
 	        currentRound += 1;
+            if(!firstMoveTaken) {
+                mrX.removeTicket(firstMove.ticket());
+                firstMoveTaken = true;
+            }
 	        s.onRoundStarted(this,currentRound);
-	        s.onMoveMade(this,firstMove);
+            s.onMoveMade(this,firstMove);
+            if(!secondMoveTaken) {
+                mrX.removeTicket(secondMove.ticket());
+                secondMoveTaken = true;
+            }
+            currentRound += 1;
 	        s.onRoundStarted(this,currentRound);
-	        currentRound += 1;
 	        s.onMoveMade(this,secondMove);
 	        currentRound -= 2;
         }
