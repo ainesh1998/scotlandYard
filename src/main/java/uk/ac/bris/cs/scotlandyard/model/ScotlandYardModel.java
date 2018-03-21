@@ -28,7 +28,7 @@ import uk.ac.bris.cs.gamekit.graph.Node;
 import javax.print.attribute.standard.Destination;
 
 // TODO implement all methods and pass all tests
-public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
+public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, MoveVisitor{
 	private List<Boolean> rounds;
 	private Graph<Integer,Transport> map;
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
@@ -209,6 +209,32 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
 		throw new IllegalArgumentException("colour not in list");
    }
 
+   //Visit method implementations from MoveVisitor
+    @Override
+	public void visit(PassMove m) {
+		//passmove does not do anything
+	}
+
+	@Override
+	public void visit(TicketMove m) {
+		ScotlandYardPlayer p = getScotPlayer(m.colour());
+		ScotlandYardPlayer mrX = getScotPlayer(BLACK);
+		p.location(m.destination());
+		p.removeTicket(m.ticket());
+		if(p.isDetective())
+			mrX.addTicket(m.ticket());
+	}
+
+	@Override
+	public void visit(DoubleMove m) {
+		ScotlandYardPlayer p = getScotPlayer(m.colour());
+		p.location(m.finalDestination());
+		p.removeTicket(DOUBLE);
+		p.removeTicket(m.firstMove().ticket());
+		p.removeTicket(m.secondMove().ticket());
+		updateDoubleSpec(m);
+	}
+
 	@Override
     public void accept(Move m) {
             requireNonNull(m);
@@ -220,19 +246,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
             if(!validMoves.contains(m))
                 throw new IllegalArgumentException("illegal move");
             //Location is updated based on move
-            if(m instanceof TicketMove){
-                p.location(((TicketMove) m).destination());
-                p.removeTicket(((TicketMove) m).ticket());
-                if(p.isDetective())
-                	mrX.addTicket(((TicketMove) m).ticket());
-            }
-            if(m instanceof DoubleMove){
-                p.location(((DoubleMove) m).finalDestination());
-                p.removeTicket(DOUBLE);
-                p.removeTicket(((DoubleMove) m).firstMove().ticket());
-				p.removeTicket(((DoubleMove) m).secondMove().ticket());
-				updateDoubleSpec(m);
-            }
+
+			m.visit(this);
 
 			updateGameOver();
 
@@ -292,7 +307,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>{
     }
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
         //if it's not a reveal round then the move should go to the last location
-        TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
+		TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
         TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
         currentPlayer += 1;
         if(revealRound && !rounds.get(currentRound + 1)){ //second move location should equal to the firstMove destination
