@@ -163,15 +163,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		int destination2 = e.destination().value();
 		Boolean sameTickets = (ticket.equals(ticket2) && getScotPlayer(player).tickets().get(ticket) < 2 );
 		if(!getDetectiveLocations().contains(destination) && !getDetectiveLocations().contains(destination2) && getScotPlayer(player).hasTickets(ticket2)) {
-			if(!sameTickets){
+            if (getScotPlayer(player).hasTickets(SECRET)) {
+                moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
+                moves.add(new DoubleMove(player, SECRET, destination, ticket2, destination2));
+            }
+            if (getScotPlayer(player).tickets().get(SECRET) >=2) {
+                moves.add(new DoubleMove(player, SECRET, destination, SECRET, destination2));
+            }
+		    if(!sameTickets){
 				moves.add(new DoubleMove(player, ticket, destination, ticket2, destination2));
-				if(!ticket2.equals(SECRET) && getScotPlayer(player).hasTickets(SECRET)) {
-                    moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
-                    moves.add(new DoubleMove(player, SECRET, destination, ticket2, destination2));
-                    moves.add(new DoubleMove(player, SECRET, destination, SECRET, destination2));
-                }
-			}
-
+            }
 		}
 		return moves;
 	}
