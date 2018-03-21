@@ -214,6 +214,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     @Override
 	public void visit(PassMove m) {
 		//passmove does not do anything
+        currentRound += 1;
 	}
 
 	@Override
@@ -224,14 +225,22 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		p.removeTicket(m.ticket());
 		if(p.isDetective())
 			mrX.addTicket(m.ticket());
+		else
+		    currentRound += 1; //if mrX increment round
 	}
 
 	@Override
 	public void visit(DoubleMove m) {
 		ScotlandYardPlayer p = getScotPlayer(m.colour());
 		p.location(m.finalDestination());
-        updateDoubleSpec(m);
-
+		if(spectators.isEmpty()){ //if they're no spectators just decrement the tickets and increment the round
+            p.removeTicket(DOUBLE);
+            p.removeTicket(m.firstMove().ticket());
+            p.removeTicket(m.secondMove().ticket());
+            currentRound += 2;
+        }else{
+            updateDoubleSpec(m);
+        }
 	}
 
 	@Override
@@ -249,10 +258,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 			m.visit(this);
 
 			updateGameOver();
-
-			if(m.colour().isMrX()){
-				currentRound += 1;
-			}
 
 			if(!isGameOver()){ //If game is over then no one should make any more moves
                 if(currentPlayer < getPlayers().size() - 1){
@@ -305,10 +310,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         }
     }
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
-        //if it's not a reveal round then the move should go to the last location
+        //if it's not a reveal round then the move should go to the last location (hiddenFirstMove and hiddenSecondMove
         ScotlandYardPlayer mrX = getScotPlayer(BLACK);
-        TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() :new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation) ;
-        TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
+        TicketMove hiddenFirstMove = new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation);
+        TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() : hiddenFirstMove;
+        TicketMove hiddenSecondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
+        TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :hiddenSecondMove;
+        //boolean variables make sure that ticket is only decremented once
         boolean firstMoveTaken = false;
         boolean secondMoveTaken = false;
         currentPlayer += 1;
@@ -319,12 +327,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	    for(Spectator s: spectators){
 	        s.onMoveMade(this,new DoubleMove(m.colour(),firstMove,secondMove));
 	        currentRound += 1;
-            if(!firstMoveTaken) {
+            if(!firstMoveTaken) { //if ticket hasn't been decremented do so
                 mrX.removeTicket(firstMove.ticket());
                 firstMoveTaken = true;
             }
 	        s.onRoundStarted(this,currentRound);
-            s.onMoveMade(this,firstMove);
+            s.onMoveMade(this,firstMove); //onMoveMade is called after only 1 ticket has been decremented
             if(!secondMoveTaken) {
                 mrX.removeTicket(secondMove.ticket());
                 secondMoveTaken = true;
@@ -332,9 +340,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             currentRound += 1;
 	        s.onRoundStarted(this,currentRound);
 	        s.onMoveMade(this,secondMove);
-	        currentRound -= 2;
+	        currentRound -= 2; // -= 2 ensures that it increments correctly for all spectators
+            // by setting it back to how it was before
         }
         currentPlayer -= 1;
+        currentRound += 2; //As a doubleMove is made the round increments by 2
     }
 
     private boolean areDetectivesStuck() {
