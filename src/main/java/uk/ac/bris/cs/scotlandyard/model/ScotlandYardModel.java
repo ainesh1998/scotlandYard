@@ -292,7 +292,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         boolean endOfRot = currentPlayer == players.size() -1;
         gameOver = ((roundsUsed || areDetectivesStuck() || mrXStuck) && (endOfRot || gameNotStarted) )|| isMrXCaptured();
         //gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
-        if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured())){
+        if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured() && endOfRot)){
         	winningPlayers.add(players.get(0).colour());
 		}
 		if(mrXStuck||isMrXCaptured()){
