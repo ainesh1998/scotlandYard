@@ -232,15 +232,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	@Override
 	public void visit(DoubleMove m) {
 		ScotlandYardPlayer p = getScotPlayer(m.colour());
-		p.location(m.finalDestination());
 		if(spectators.isEmpty()){ //if they're no spectators just decrement the tickets and increment the round
             p.removeTicket(DOUBLE);
             p.removeTicket(m.firstMove().ticket());
             p.removeTicket(m.secondMove().ticket());
+
             currentRound += 2;
         }else{
             updateDoubleSpec(m);
         }
+        p.location(m.finalDestination());
 	}
 
 	@Override
@@ -331,6 +332,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
                 mrX.removeTicket(firstMove.ticket());
                 firstMoveTaken = true;
             }
+			mrX.location(firstMove.destination()); //Set mrX to firstMove Location
 	        s.onRoundStarted(this,currentRound);
             s.onMoveMade(this,firstMove); //onMoveMade is called after only 1 ticket has been decremented
             if(!secondMoveTaken) {
@@ -338,8 +340,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
                 secondMoveTaken = true;
             }
             currentRound += 1;
+			mrX.location(secondMove.destination()); //Set MrX to SecondMove location
 	        s.onRoundStarted(this,currentRound);
-	        s.onMoveMade(this,secondMove);
+			s.onMoveMade(this,secondMove);
 	        currentRound -= 2; // -= 2 ensures that it increments correctly for all spectators
             // by setting it back to how it was before
         }
