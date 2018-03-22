@@ -36,6 +36,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	private int currentPlayer;
 	private boolean gameOver = false;
 	private int xLastLocation = 0;
+	private int xActualLocation;
 	private boolean revealRound = false;
 	private boolean gameNotStarted = true;
 	private List<Spectator> spectators = new ArrayList<>();
@@ -48,6 +49,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		this.map = requireNonNull(graph);
 		requireNonNull(mrX);
 		requireNonNull(firstDetective);
+		xActualLocation = mrX.location;
 		players.add(0,new ScotlandYardPlayer(mrX.player,mrX.colour,mrX.location,mrX.tickets));
 		players.add(1, new ScotlandYardPlayer(firstDetective.player,firstDetective.colour,firstDetective.location,firstDetective.tickets));
 		currentPlayer = 0;
@@ -132,8 +134,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		if(gameOver)
 			throw new IllegalStateException();
 	   ScotlandYardPlayer p = players.get(0);
-	   p.player().makeMove(this,p.location(),validMove(p.colour()),this);
-
+	   p.player().makeMove(this,xActualLocation,validMove(p.colour()),this);
 	}
 	private void takeMove(){
         ScotlandYardPlayer p = players.get(currentPlayer);
@@ -179,8 +180,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
        ScotlandYardPlayer p = getScotPlayer(player);
-
-       Node<Integer> position = new Node(p.location()); //have no idea how to get rid of this warning
+       Node<Integer> position = p.isMrX()? new Node(xActualLocation):new Node(p.location()); //have no idea how to get rid of this warning
        Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
@@ -221,12 +221,15 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public void visit(TicketMove m) {
 		ScotlandYardPlayer p = getScotPlayer(m.colour());
 		ScotlandYardPlayer mrX = getScotPlayer(BLACK);
-		p.location(m.destination());
 		p.removeTicket(m.ticket());
-		if(p.isDetective())
-			mrX.addTicket(m.ticket());
-		else
-		    currentRound += 1; //if mrX increment round
+		if(p.isDetective()) {
+            p.location(m.destination());
+            mrX.addTicket(m.ticket());
+        }
+		else {
+            xActualLocation = m.destination();//stores where mrX actually is
+            currentRound += 1; //if mrX increment round
+        }
 	}
 
 	@Override
@@ -236,12 +239,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
             p.removeTicket(DOUBLE);
             p.removeTicket(m.firstMove().ticket());
             p.removeTicket(m.secondMove().ticket());
-
             currentRound += 2;
         }else{
             updateDoubleSpec(m);
         }
-        p.location(m.finalDestination());
+        xActualLocation = m.finalDestination();
 	}
 
 	@Override
@@ -288,7 +290,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	    boolean roundsUsed = currentRound == rounds.size();
         boolean mrXStuck = validMove(BLACK).isEmpty();
         boolean endOfRot = currentPlayer == players.size() -1;
-        gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
+        gameOver = ((roundsUsed || areDetectivesStuck() || mrXStuck) && (endOfRot || gameNotStarted) )|| isMrXCaptured();
+        //gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
         if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured())){
         	winningPlayers.add(players.get(0).colour());
 		}
@@ -313,21 +316,27 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
         //if it's not a reveal round then the move should go to the last location (hiddenFirstMove and hiddenSecondMove
         ScotlandYardPlayer mrX = getScotPlayer(BLACK);
+        boolean nextRoundReveal = rounds.get(currentRound + 1);
         TicketMove hiddenFirstMove = new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation);
         TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() : hiddenFirstMove;
         TicketMove hiddenSecondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
         TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :hiddenSecondMove;
         //boolean variables make sure that ticket is only decremented once
+        if(nextRoundReveal)
+            xLastLocation = secondMove.destination();
         boolean firstMoveTaken = false;
         boolean secondMoveTaken = false;
         currentPlayer += 1;
         mrX.removeTicket(DOUBLE);
+        mrX.location(xLastLocation);
         if(revealRound && !rounds.get(currentRound + 1)){ //second move location should equal to the firstMove destination
             secondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),firstMove.destination());
         }
 	    for(Spectator s: spectators){
 	        s.onMoveMade(this,new DoubleMove(m.colour(),firstMove,secondMove));
 	        currentRound += 1;
+            if(revealRound)
+                xLastLocation = firstMove.destination();
             if(!firstMoveTaken) { //if ticket hasn't been decremented do so
                 mrX.removeTicket(firstMove.ticket());
                 firstMoveTaken = true;
@@ -346,6 +355,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	        currentRound -= 2; // -= 2 ensures that it increments correctly for all spectators
             // by setting it back to how it was before
         }
+        mrX.location(xLastLocation);
         currentPlayer -= 1;
         currentRound += 2; //As a doubleMove is made the round increments by 2
     }
@@ -364,7 +374,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     private boolean isMrXCaptured() {
 	    ScotlandYardPlayer mrx = getScotPlayer(BLACK);
         for (ScotlandYardPlayer p : players) {
-            if (p.isDetective() && p.location() == mrx.location()) {
+            if (p.isDetective() && p.location() == xActualLocation) {
                 return true;
             }
         }
@@ -399,8 +409,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		    if (player.colour() == colour) {
 		        if (player.isMrX()) {
 		            if (revealRound) {
-		            	xLastLocation = player.location();
-		            	return Optional.of(player.location());
+		            	xLastLocation = xActualLocation;
+		            	return Optional.of(xLastLocation);
 		            }
                     else return Optional.of(xLastLocation); // if MrX is hidden this round, return 0
 
