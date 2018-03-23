@@ -327,6 +327,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
    	TicketMove hiddenFirstMove = new TicketMove(m.colour(),firstMove.ticket(),xLastLocation);
    	TicketMove hiddenSecondMove = new TicketMove(m.colour(),secondMove.ticket(),xLastLocation);
    	boolean nextRevealRound = rounds.get(currentRound + 1);
+   	boolean currentRevealRound = revealRound;
+   	boolean prevRevealRound = (currentRound < 1) ? rounds.get(0) : rounds.get(currentRound - 1);
    	boolean hasDecremented = false; //Tickets haven't been decremented yet
    	//if it's a reveal round then reveal intermediate destination
    	firstMove = revealRound ? firstMove : hiddenFirstMove;
@@ -334,22 +336,28 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
    	secondMove =  nextRevealRound ? secondMove : hiddenSecondMove;
    	m = new DoubleMove(m.colour(),firstMove,secondMove);
    	currentPlayer += 1;//mrX.location(oldXLastLocation)
-    revealRound = (currentRound < 1) ? rounds.get(0) : rounds.get(currentRound - 1);
-    xLastLocation = oldXlastLocation;
+    updateRevealandLocation(prevRevealRound,oldXlastLocation);
    	mrX.removeTicket(DOUBLE);
    	for(Spectator s: spectators){
    		s.onMoveMade(this,m);
-		revealRound = rounds.get(currentRound);
-		xLastLocation = (revealRound)  ? xActualLocation: xLastLocation;
+		updateRevealandLocation(currentRevealRound,firstMove.destination());
+		xActualLocation = m.firstMove().destination();
    		currentRound += 1;
    		announceMove(firstMove,s,mrX,hasDecremented);
-   		currentRound += 1;
+        updateRevealandLocation(nextRevealRound,secondMove.destination());
+        xActualLocation = m.finalDestination();
+        currentRound += 1;
    		announceMove(secondMove,s,mrX,hasDecremented);
    		currentRound -= 2; //current Round is reduced to keep it looping
 		hasDecremented = true;
 	}
 	currentPlayer -= 1; //current Player is decremented as it's incremented outside
 	currentRound += 2;
+   }
+
+   private void updateRevealandLocation(boolean x,int loc){
+	    revealRound = x;
+	    xLastLocation = loc;
    }
     private void announceMove(TicketMove m, Spectator s,ScotlandYardPlayer mrX,boolean hasDecremented){
    		if(!hasDecremented){ //it should only decrement once
