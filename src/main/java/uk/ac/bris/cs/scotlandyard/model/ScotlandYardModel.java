@@ -214,7 +214,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     @Override
 	public void visit(PassMove m) {
 		//passmove does not do anything
-        currentRound += 1;
 	}
 
 	@Override
