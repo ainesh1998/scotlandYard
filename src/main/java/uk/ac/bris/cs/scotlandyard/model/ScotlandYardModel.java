@@ -234,14 +234,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	@Override
 	public void visit(DoubleMove m) {
 		ScotlandYardPlayer p = getScotPlayer(m.colour());
-		if(spectators.isEmpty()){ //if they're no spectators just decrement the tickets and increment the round
-            p.removeTicket(DOUBLE);
-            p.removeTicket(m.firstMove().ticket());
-            p.removeTicket(m.secondMove().ticket());
-            currentRound += 2;
-        }else{
-            updateDoubleSpec(m);
-        }
+		 //if they're no spectators just decrement the tickets and increment the round
+		if(spectators.isEmpty()){
+			p.removeTicket(DOUBLE);
+			p.removeTicket(m.firstMove().ticket());
+			p.removeTicket(m.secondMove().ticket());
+			currentRound += 2;
+
+		}else{
+			updateDoubleSpec(m,p);
+		}
         xActualLocation = m.finalDestination();
 	}
 
@@ -312,51 +314,49 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
                 s.onMoveMade(this, move);
         }
     }
-    private void updateDoubleSpec(Move m){ //Special case needed to increment DoubleMove
-        //if it's not a reveal round then the move should go to the last location (hiddenFirstMove and hiddenSecondMove
-        ScotlandYardPlayer mrX = getScotPlayer(BLACK);
-        boolean nextRoundReveal = rounds.get(currentRound + 1);
-        TicketMove hiddenFirstMove = new TicketMove(m.colour(),((DoubleMove) m).firstMove().ticket(),xLastLocation);
-        TicketMove firstMove = (revealRound)? ((DoubleMove) m ).firstMove() : hiddenFirstMove;
-        TicketMove hiddenSecondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),xLastLocation);
-        TicketMove secondMove = (rounds.get(currentRound + 1)) ? ((DoubleMove) m).secondMove() :hiddenSecondMove;
-        //boolean variables make sure that ticket is only decremented once
-        if(nextRoundReveal)
-            xLastLocation = secondMove.destination();
-        boolean firstMoveTaken = false;
-        boolean secondMoveTaken = false;
-        currentPlayer += 1;
-        mrX.removeTicket(DOUBLE);
-        mrX.location(xLastLocation);
-        if(revealRound && !rounds.get(currentRound + 1)){ //second move location should equal to the firstMove destination
-            secondMove = new TicketMove(m.colour(),((DoubleMove) m).secondMove().ticket(),firstMove.destination());
-        }
-	    for(Spectator s: spectators){
-	        s.onMoveMade(this,new DoubleMove(m.colour(),firstMove,secondMove));
-	        currentRound += 1;
-            if(revealRound)
-                xLastLocation = firstMove.destination();
-            if(!firstMoveTaken) { //if ticket hasn't been decremented do so
-                mrX.removeTicket(firstMove.ticket());
-                firstMoveTaken = true;
-            }
-			mrX.location(firstMove.destination()); //Set mrX to firstMove Location
-	        s.onRoundStarted(this,currentRound);
-            s.onMoveMade(this,firstMove); //onMoveMade is called after only 1 ticket has been decremented
-            if(!secondMoveTaken) {
-                mrX.removeTicket(secondMove.ticket());
-                secondMoveTaken = true;
-            }
-            currentRound += 1;
-			mrX.location(secondMove.destination()); //Set MrX to SecondMove location
-	        s.onRoundStarted(this,currentRound);
-			s.onMoveMade(this,secondMove);
-	        currentRound -= 2; // -= 2 ensures that it increments correctly for all spectators
-            // by setting it back to how it was before
-        }
-        mrX.location(xLastLocation);
-        currentPlayer -= 1;
-        currentRound += 2; //As a doubleMove is made the round increments by 2
+
+   private void updateDoubleSpec(DoubleMove m,ScotlandYardPlayer mrX){
+   	TicketMove firstMove = m.firstMove();
+   	TicketMove secondMove = m.secondMove();
+   	int oldXlastLocation = xLastLocation;
+   	if(revealRound){ //if it's a reveal round mrX's location should be the intermediate location
+   		xActualLocation = firstMove.destination();
+   		xLastLocation = xActualLocation;
+	}
+	//hidden moves needed to conceal mr X's location
+   	TicketMove hiddenFirstMove = new TicketMove(m.colour(),firstMove.ticket(),xLastLocation);
+   	TicketMove hiddenSecondMove = new TicketMove(m.colour(),secondMove.ticket(),xLastLocation);
+   	boolean nextRevealRound = rounds.get(currentRound + 1);
+   	boolean hasDecremented = false; //Tickets haven't been decremented yet
+   	//if it's a reveal round then reveal intermediate destination
+   	firstMove = revealRound ? firstMove : hiddenFirstMove;
+   	//if the next round's a reveal round then reveal final destination
+   	secondMove =  nextRevealRound ? secondMove : hiddenSecondMove;
+   	m = new DoubleMove(m.colour(),firstMove,secondMove);
+   	currentPlayer += 1;//mrX.location(oldXLastLocation)
+    revealRound = (currentRound < 1) ? rounds.get(0) : rounds.get(currentRound - 1);
+    xLastLocation = oldXlastLocation;
+   	mrX.removeTicket(DOUBLE);
+   	for(Spectator s: spectators){
+   		s.onMoveMade(this,m);
+		revealRound = rounds.get(currentRound);
+		xLastLocation = (revealRound)  ? xActualLocation: xLastLocation;
+   		currentRound += 1;
+   		announceMove(firstMove,s,mrX,hasDecremented);
+   		currentRound += 1;
+   		announceMove(secondMove,s,mrX,hasDecremented);
+   		currentRound -= 2; //current Round is reduced to keep it looping
+		hasDecremented = true;
+	}
+	currentPlayer -= 1; //current Player is decremented as it's incremented outside
+	currentRound += 2;
+   }
+    private void announceMove(TicketMove m, Spectator s,ScotlandYardPlayer mrX,boolean hasDecremented){
+   		if(!hasDecremented){ //it should only decrement once
+   			mrX.removeTicket(m.ticket());
+		}
+   		s.onRoundStarted(this,currentRound);
+   		s.onMoveMade(this,m);
     }
 
     private boolean areDetectivesStuck() {
