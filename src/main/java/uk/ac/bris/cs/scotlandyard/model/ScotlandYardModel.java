@@ -17,9 +17,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import sun.security.krb5.SCDynamicStoreConfig;
-import sun.security.x509.EDIPartyName;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
@@ -180,7 +177,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
        ScotlandYardPlayer p = getScotPlayer(player);
-       Node<Integer> position = p.isMrX()? new Node(xActualLocation):new Node(p.location()); //have no idea how to get rid of this warning
+       Node<Integer> position = p.isMrX()? new Node<>(xActualLocation):new Node<>(p.location()); //have no idea how to get rid of this warning
        Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
