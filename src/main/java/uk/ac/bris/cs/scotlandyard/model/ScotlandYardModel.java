@@ -1,10 +1,8 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.*;
+
 import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.BLACK;
-import static uk.ac.bris.cs.scotlandyard.model.Colour.BLUE;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.*;
 
 import java.util.ArrayList;
@@ -16,13 +14,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.google.common.collect.ImmutableList;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 import uk.ac.bris.cs.gamekit.graph.Node;
 
-import javax.print.attribute.standard.Destination;
 
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, MoveVisitor{
@@ -248,8 +244,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     public void accept(Move m) {
             requireNonNull(m);
             Set<Move> validMoves = validMove(m.colour());
-            ScotlandYardPlayer p = getScotPlayer(m.colour());
-            ScotlandYardPlayer mrX = getScotPlayer(BLACK);
             revealRound = players.get(currentPlayer).isMrX() && rounds.get(currentRound);
 
             if(!validMoves.contains(m))
@@ -259,20 +253,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 			updateGameOver();
 
 			if(!isGameOver()){ //If game is over then no one should make any more moves
-                if(currentPlayer < getPlayers().size() - 1){
-                    currentPlayer += 1;
-                    if(!(m instanceof DoubleMove))
-                        updateSpectators(m);
-                    takeMove();
-                }
-                else{
-                    currentPlayer = 0; // starts at mrX again
-                    if(!(m instanceof DoubleMove)) //Double Moves have already been taken care of
-                        updateSpectators(m);
+				currentPlayer = (currentPlayer + 1) % players.size();
+				if(!(m instanceof DoubleMove)) //Double Moves have already been taken care of
+					updateSpectators(m);
+                if(currentPlayer == 0){
 					for(Spectator s: spectators){
 						s.onRotationComplete(this);
 					}
-
+                }
+                else{
+					takeMove();
                 }
             }else{
 				currentPlayer = (currentPlayer == players.size() -1 ) ? 0 : (currentPlayer += 1);
@@ -287,7 +277,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         boolean mrXStuck = validMove(BLACK).isEmpty();
         boolean endOfRot = currentPlayer == players.size() -1;
         gameOver = ((roundsUsed || areDetectivesStuck() || mrXStuck) && (endOfRot || gameNotStarted) )|| isMrXCaptured();
-        //gameOver = (mrXStuck || roundsUsed || areDetectivesStuck() || isMrXCaptured()) && (endOfRot || gameNotStarted);
         if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured() && endOfRot)){
         	winningPlayers.add(players.get(0).colour());
 		}
@@ -333,13 +322,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		boolean nextRevealRound = rounds.get(currentRound + 1);
 		boolean currentRevealRound = revealRound;
 		boolean prevRevealRound = (currentRound < 1) ? rounds.get(0) : rounds.get(currentRound - 1);
-		boolean hasDecremented = false; //Tickets haven't been decremented yet
 
 		m = getHiddenDoubleMoves(m);
 		TicketMove firstMove = m.firstMove();
 		TicketMove secondMove = m.secondMove();
 
-		currentPlayer += 1;//mrX.location(oldXLastLocation)
+		currentPlayer += 1;
 		updateRevealandLocation(prevRevealRound,oldXlastLocation);
 		mrX.removeTicket(DOUBLE);
 		for(Spectator s: spectators){
@@ -347,14 +335,18 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 			updateRevealandLocation(currentRevealRound,firstMove.destination());
 			xActualLocation = firstMove.destination();
 			currentRound += 1;
-			announceMove(firstMove,s,mrX,hasDecremented);
+			announceMove(firstMove,s,mrX);
 			updateRevealandLocation(nextRevealRound,secondMove.destination());
 			xActualLocation = m.finalDestination();
 			currentRound += 1;
-			announceMove(secondMove,s,mrX,hasDecremented);
+			announceMove(secondMove,s,mrX);
 			currentRound -= 2; //current Round is reduced to keep it looping
-			hasDecremented = true;
+			//tickets are re-added to keep it looping as well
+			mrX.addTicket(firstMove.ticket());
+			mrX.addTicket(secondMove.ticket());
 		}
+		mrX.removeTicket(firstMove.ticket());
+		mrX.removeTicket(secondMove.ticket());
 		currentPlayer -= 1; //current Player is decremented as it's incremented outside
 		currentRound += 2;
 	}
@@ -363,10 +355,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	    revealRound = x;
 	    xLastLocation = loc;
    }
-    private void announceMove(TicketMove m, Spectator s,ScotlandYardPlayer mrX,boolean hasDecremented){
-   		if(!hasDecremented){ //it should only decrement once
-   			mrX.removeTicket(m.ticket());
-		}
+    private void announceMove(TicketMove m, Spectator s,ScotlandYardPlayer mrX){
+		mrX.removeTicket(m.ticket());
    		s.onRoundStarted(this,currentRound);
    		s.onMoveMade(this,m);
     }
@@ -383,7 +373,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     }
 
     private boolean isMrXCaptured() {
-	    ScotlandYardPlayer mrx = getScotPlayer(BLACK);
         for (ScotlandYardPlayer p : players) {
             if (p.isDetective() && p.location() == xActualLocation) {
                 return true;
@@ -453,9 +442,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	public int getCurrentRound() {
 		return currentRound;
 	}
-	public boolean isRevealRound(){
-	    return (rounds.get(currentRound));
-    }
 
 	@Override
 	public List<Boolean> getRounds() {
