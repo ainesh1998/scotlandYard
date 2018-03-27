@@ -20,7 +20,6 @@ import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 import uk.ac.bris.cs.gamekit.graph.Node;
 
 
-// TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, MoveVisitor{
 	private List<Boolean> rounds;
 	private Graph<Integer,Transport> map;
@@ -88,6 +87,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		}
 	}
 
+
 	private boolean isNotDetective(PlayerConfiguration x){ //checks whether a player is a detective or not
 		return (x.colour.isMrX() || x.tickets.get(DOUBLE) != 0|| x.tickets.get(SECRET) != 0);
 	}
@@ -106,7 +106,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
-		// TODO
         if(spectators.contains(spectator))
             throw new IllegalArgumentException("spectator already registered");
         spectators.add(requireNonNull(spectator));
@@ -114,7 +113,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 	@Override
 	public void unregisterSpectator(Spectator spectator) {
-		// TODO
         requireNonNull(spectator);
         if(!spectators.contains(spectator))
             throw new IllegalArgumentException("spectator wasn't registered");
@@ -379,14 +377,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
     }
 
 	@Override
-	public Collection<Spectator> getSpectators() {
-		// TODO
-		return Collections.unmodifiableList(spectators);
-	}
+	public Collection<Spectator> getSpectators() { return Collections.unmodifiableList(spectators); }
 
 	@Override
 	public List<Colour> getPlayers() {
-		// TODO
 		List<Colour> colours = new ArrayList<>();
 		for ( ScotlandYardPlayer x: players){
 			colours.add(x.colour());
@@ -441,15 +435,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	}
 
 	@Override
-	public List<Boolean> getRounds() {
-		// TODO
-		return Collections.unmodifiableList(rounds);
-	}
+	public List<Boolean> getRounds() { return Collections.unmodifiableList(rounds); }
 
 	@Override
-	public Graph<Integer, Transport> getGraph() {
-		// TODO
-		return new ImmutableGraph<>(map);
-	}
+	public Graph<Integer, Transport> getGraph() { return new ImmutableGraph<>(map); }
 
 }
