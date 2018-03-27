@@ -129,6 +129,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	   ScotlandYardPlayer p = players.get(0);
 	   p.player().makeMove(this,xActualLocation,validMove(p.colour()),this);
 	}
+
 	private void takeMove(){
         ScotlandYardPlayer p = players.get(currentPlayer);
         p.player().makeMove(this,p.location(),validMove(p.colour()),this);
@@ -206,7 +207,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
    //Visit method implementations from MoveVisitor
     @Override
 	public void visit(PassMove m) {
-		//passmove does not do anything
+		//passMove does not do anything
 	}
 
 	@Override
@@ -251,9 +252,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
 			m.visit(this);
 			updateGameOver();
-
+			currentPlayer = (currentPlayer + 1) % players.size();
 			if(!isGameOver()){ //If game is over then no one should make any more moves
-				currentPlayer = (currentPlayer + 1) % players.size();
 				if(!(m instanceof DoubleMove)) //Double Moves have already been taken care of
 					updateSpectators(m);
                 if(currentPlayer == 0){
@@ -265,7 +265,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 					takeMove();
                 }
             }else{
-				currentPlayer = (currentPlayer == players.size() -1 ) ? 0 : (currentPlayer += 1);
 			    updateSpectators(m);
 				for(Spectator s: spectators){
 					s.onGameOver(this,winningPlayers);
@@ -278,7 +277,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
         boolean endOfRot = currentPlayer == players.size() -1;
         gameOver = ((roundsUsed || areDetectivesStuck() || mrXStuck) && (endOfRot || gameNotStarted) )|| isMrXCaptured();
         if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured() && endOfRot)){
-        	winningPlayers.add(players.get(0).colour());
+        	winningPlayers.add(BLACK);
 		}
 		if(mrXStuck||isMrXCaptured()){
         	for(ScotlandYardPlayer p : players){
