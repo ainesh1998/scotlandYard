@@ -136,7 +136,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	private Set<Move> getTicketMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player){
 		Ticket ticket = fromTransport(e.data());
 		int destination = e.destination().value();
+		//if there aren't any more rounds then double moves should not be added
         Boolean noMoreRounds = (getCurrentRound() == rounds.size() - 1 );
+        //players can't move to locations occupied by detectives
         if(!getDetectiveLocations().contains(destination)){
             if(getScotPlayer(player).hasTickets(ticket))
                 moves.add(new TicketMove(player,ticket,destination));
@@ -154,9 +156,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	private Set<Move> getDoubleMoves(Edge<Integer,Transport> e,Set<Move> moves,Colour player,Ticket ticket,int destination){
 		Ticket ticket2 = fromTransport(e.data());
 		int destination2 = e.destination().value();
+		//ensures that player has enough tickets for move
 		Boolean sameTickets = (ticket.equals(ticket2) && getScotPlayer(player).tickets().get(ticket) < 2 );
 		if(!getDetectiveLocations().contains(destination) && !getDetectiveLocations().contains(destination2) && getScotPlayer(player).hasTickets(ticket2)) {
             if (getScotPlayer(player).hasTickets(SECRET)) {
+            	// add all possible combinations of a SECRET ticket since they can replace any other transport
                 moves.add(new DoubleMove(player, ticket, destination, SECRET, destination2));
                 moves.add(new DoubleMove(player, SECRET, destination, ticket2, destination2));
             }
@@ -172,7 +176,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 
    private Set<Move> validMove(Colour player){ //Generates all possible moves that can be made from anywhere on the board
        ScotlandYardPlayer p = getScotPlayer(player);
-       Node<Integer> position = p.isMrX()? new Node<>(xActualLocation):new Node<>(p.location()); //have no idea how to get rid of this warning
+       Node<Integer> position = p.isMrX()? new Node<>(xActualLocation):new Node<>(p.location());
        Collection<Edge<Integer,Transport>> edges = map.getEdgesFrom(position);
        Set<Move> moves = new HashSet<>();
        for(Edge<Integer,Transport> e : edges){
@@ -273,6 +277,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	    boolean roundsUsed = currentRound == rounds.size();
         boolean mrXStuck = validMove(BLACK).isEmpty();
         boolean endOfRot = currentPlayer == players.size() -1;
+        /*the game is over if the rounds are used, the detectives are stuck or mrX is stuck at the end of a rotation
+        or if mrX is captured at any point in the game */
         gameOver = ((roundsUsed || areDetectivesStuck() || mrXStuck) && (endOfRot || gameNotStarted) )|| isMrXCaptured();
         if(areDetectivesStuck() || (roundsUsed && !isMrXCaptured() && endOfRot)){
         	winningPlayers.add(BLACK);
@@ -329,7 +335,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		mrX.removeTicket(DOUBLE);
 		for(Spectator s: spectators){
 			s.onMoveMade(this,hidden);
-			announceMove(hidden.firstMove(),s,mrX, m.firstMove(), currentRevealRound); //are 5 arguments too many?
+			announceMove(hidden.firstMove(),s,mrX, m.firstMove(), currentRevealRound);
 			announceMove(hidden.secondMove(),s,mrX, m.secondMove(), nextRevealRound);
 			currentRound -= 2; //current Round is reduced to keep it looping
 			//tickets are re-added to keep it looping as well
@@ -420,19 +426,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 	}
 
 	@Override
-	public boolean isGameOver() {
-		return gameOver;
-	}
+	public boolean isGameOver() { return gameOver; }
 
 	@Override
-	public Colour getCurrentPlayer() {
-		return players.get(currentPlayer).colour();
-	}
+	public Colour getCurrentPlayer() { return players.get(currentPlayer).colour(); }
 
 	@Override
-	public int getCurrentRound() {
-		return currentRound;
-	}
+	public int getCurrentRound() { return currentRound; }
 
 	@Override
 	public List<Boolean> getRounds() { return Collections.unmodifiableList(rounds); }
