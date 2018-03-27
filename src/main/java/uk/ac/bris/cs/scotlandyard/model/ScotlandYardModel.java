@@ -323,42 +323,40 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, Move
 		boolean currentRevealRound = revealRound;
 		boolean prevRevealRound = (currentRound < 1) ? rounds.get(0) : rounds.get(currentRound - 1);
 
-		m = getHiddenDoubleMoves(m);
-		TicketMove firstMove = m.firstMove();
-		TicketMove secondMove = m.secondMove();
+		DoubleMove hidden = getHiddenDoubleMoves(m); //locations of m are updated based on revealRound
+        Ticket ticket1 = hidden.firstMove().ticket();
+        Ticket ticket2 = hidden.secondMove().ticket();
 
 		currentPlayer += 1;
-		updateRevealandLocation(prevRevealRound,oldXlastLocation);
+		updateRevealAndLocation(prevRevealRound,oldXlastLocation);
 		mrX.removeTicket(DOUBLE);
 		for(Spectator s: spectators){
-			s.onMoveMade(this,m);
-			updateRevealandLocation(currentRevealRound,firstMove.destination());
-			xActualLocation = firstMove.destination();
-			currentRound += 1;
-			announceMove(firstMove,s,mrX);
-			updateRevealandLocation(nextRevealRound,secondMove.destination());
-			xActualLocation = m.finalDestination();
-			currentRound += 1;
-			announceMove(secondMove,s,mrX);
+			s.onMoveMade(this,hidden);
+			announceMove(hidden.firstMove(),s,mrX, m.firstMove(), currentRevealRound); //are 5 arguments too many?
+			announceMove(hidden.secondMove(),s,mrX, m.secondMove(), nextRevealRound);
 			currentRound -= 2; //current Round is reduced to keep it looping
 			//tickets are re-added to keep it looping as well
-			mrX.addTicket(firstMove.ticket());
-			mrX.addTicket(secondMove.ticket());
+			mrX.addTicket(ticket1);
+			mrX.addTicket(ticket2);
 		}
-		mrX.removeTicket(firstMove.ticket());
-		mrX.removeTicket(secondMove.ticket());
+		mrX.removeTicket(ticket1);
+		mrX.removeTicket(ticket2);
 		currentPlayer -= 1; //current Player is decremented as it's incremented outside
 		currentRound += 2;
 	}
 
-   private void updateRevealandLocation(boolean x,int loc){
+   private void updateRevealAndLocation(boolean x,int loc){
 	    revealRound = x;
 	    xLastLocation = loc;
    }
-    private void announceMove(TicketMove m, Spectator s,ScotlandYardPlayer mrX){
-		mrX.removeTicket(m.ticket());
+
+    private void announceMove(TicketMove hidden, Spectator s,ScotlandYardPlayer mrX, TicketMove actual, boolean reveal){
+        updateRevealAndLocation(reveal,hidden.destination());
+        xActualLocation = actual.destination();
+	    currentRound += 1;
+		mrX.removeTicket(actual.ticket());
    		s.onRoundStarted(this,currentRound);
-   		s.onMoveMade(this,m);
+   		s.onMoveMade(this,hidden);
     }
 
     private boolean areDetectivesStuck() {
