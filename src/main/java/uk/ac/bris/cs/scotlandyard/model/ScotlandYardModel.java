@@ -24,8 +24,8 @@ import uk.ac.bris.cs.gamekit.graph.Node;
 
 
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move>, MoveVisitor{
-	private List<Boolean> rounds;
-	private Graph<Integer,Transport> map;
+	private final List<Boolean> rounds;
+	private final Graph<Integer,Transport> map;
 	private List<ScotlandYardPlayer> players = new ArrayList<>();
 	private int currentRound = 0;
 	private int currentPlayer;
